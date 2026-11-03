@@ -24,7 +24,6 @@ import { scoreFor, tierLabel } from '../jobs/jobView.ts'
 import { LoadProblem } from '../jobs/LoadProblem.tsx'
 import { ScoreMark, VerdictBadge } from '../jobs/ScoreParts.tsx'
 import { useNow } from '../jobs/useNow.ts'
-import { fetchDraftAvailable } from './aiDraft.ts'
 import { answerRows, answerStates, recordSubmission, resumeAdvice, resumeVersions, submissionTimeProblem } from './applyModel.ts'
 import { AnswersStep } from './AnswersStep.tsx'
 import { CoverLetterStep, type SaveState } from './CoverLetterStep.tsx'
@@ -121,11 +120,13 @@ function useDraftAvailable(): boolean {
   const { mode } = useData()
   const [available, setAvailable] = useState(false)
   useEffect(() => {
-    if (mode.kind !== 'local') return
+    if (!import.meta.env.DEV || mode.kind !== 'local') return
     let current = true
-    void fetchDraftAvailable().then((value) => {
-      if (current) setAvailable(value)
-    })
+    void import('./aiDraft.ts')
+      .then((module) => module.fetchDraftAvailable())
+      .then((value) => {
+        if (current) setAvailable(value)
+      })
     return () => {
       current = false
     }

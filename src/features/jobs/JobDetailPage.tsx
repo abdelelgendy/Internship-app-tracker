@@ -19,7 +19,7 @@ import { useToast } from '../../ui/toast-context.ts'
 import { useStartApplication } from '../apply/useStartApplication.ts'
 import { formatAge, formatDay, formatDayTime, fromLocalInputValue, sourceLabel, WORKPLACE_LABEL } from './format.ts'
 import { ExternalIcon } from './icons.tsx'
-import { duplicateIndex, ghostFor, markSkills, scoreFor, skillMentions, tierLabel, tierMeaning, type SkillMention } from './jobView.ts'
+import { duplicateOf, ghostFor, markSkills, scoreFor, skillMentions, tierLabel, tierMeaning, type SkillMention } from './jobView.ts'
 import { LoadProblem } from './LoadProblem.tsx'
 import { ScoreBreakdown, ScoreMark, VerdictBadge } from './ScoreParts.tsx'
 import { useNow } from './useNow.ts'
@@ -84,7 +84,7 @@ function JobDetail({
   const { start, startingId } = useStartApplication()
   const facts = useMemo(() => factsFor(job), [job])
   const score = useMemo(() => scoreFor(job, profile, now), [job, profile, now])
-  const duplicate = useMemo(() => duplicateIndex(jobs).get(job.id) ?? null, [jobs, job.id])
+  const duplicate = useMemo(() => duplicateOf(job, jobs), [job, jobs])
   const ghost = useMemo(() => ghostFor(job, jobs), [job, jobs])
   const skills = useMemo(() => skillMentions(facts, profile), [facts, profile])
   const jobApps = applications.filter((app) => app.jobId === job.id)
@@ -123,8 +123,8 @@ function JobDetail({
             Looks like a repeat of{' '}
             <Link to={`/jobs/${duplicate.original.id}`} className="font-medium underline underline-offset-2">
               {duplicate.original.company}, {duplicate.original.title}
-            </Link>
-            , found earlier ({duplicate.reason === 'url' ? 'same address' : 'same company and title'}).
+            </Link>{' '}
+            ({duplicate.reason === 'url' ? 'same address' : 'same company and title'}).
           </Callout>
         ) : null}
         {ghost ? <Callout tone="warn">Possible ghost job. {ghost}</Callout> : null}
@@ -211,7 +211,7 @@ function VerdictCard({ job, score }: { job: Job; score: ScoreResult | null }) {
       <CardHeader title="Fit" />
       <CardBody className="space-y-3">
         <div className="flex items-center gap-4">
-          <p className="flex items-baseline gap-2.5 pl-1">
+          <p className="flex items-baseline gap-4 pl-2">
             <ScoreMark score={score} size="lg" />
             <span className="text-[0.8125rem] text-fg-muted">of 100</span>
           </p>

@@ -1,5 +1,5 @@
 import { HOUR_MS, toIso, toMillis, type Instant } from '../../engine/dates.ts'
-import { companyTitleKey, ghostReason, urlKey } from '../../engine/dedup.ts'
+import { findDuplicate, ghostReason } from '../../engine/dedup.ts'
 import { recencyGate } from '../../engine/gates.ts'
 import { extractFacts } from '../../engine/facts.ts'
 import { detectWorkplace, looksLikeSoftwareTitle, phraseRegex } from '../../engine/normalize.ts'
@@ -31,24 +31,19 @@ function discoveredOrder(a: Job, b: Job): number {
 }
 
 /**
- * Which jobs repeat one found earlier, by the same rules as the engine's findDuplicate (a
- * matching URL beats a matching company and title), in one pass instead of comparing every pair.
+ * The posting this one repeats, by the engine's rules (a matching URL beats a matching company
+ * and title). A job marked as a duplicate names what it repeats. Any other job only counts as a
+ * repeat of one found earlier, and not of one that was itself marked as the repeat.
  */
-export function duplicateIndex(jobs: readonly Job[]): Map<string, Duplicate> {
-  const byUrl = new Map<string, Job>()
-  const byKey = new Map<string, Job>()
-  const duplicates = new Map<string, Duplicate>()
-  for (const job of [...jobs].sort(discoveredOrder)) {
-    const url = urlKey(job.url)
-    const key = companyTitleKey(job.company, job.title)
-    const sameUrl = byUrl.get(url)
-    const sameKey = byKey.get(key)
-    if (sameUrl) duplicates.set(job.id, { reason: 'url', original: sameUrl })
-    else if (sameKey) duplicates.set(job.id, { reason: 'company_title', original: sameKey })
-    if (!byUrl.has(url)) byUrl.set(url, job)
-    if (!byKey.has(key)) byKey.set(key, job)
-  }
-  return duplicates
+export function duplicateOf(job: Job, jobs: readonly Job[]): Duplicate | null {
+  const others = jobs.filter((other) => other.id !== job.id)
+  const pool =
+    job.status === 'skipped_duplicate'
+      ? others
+      : others.filter((other) => discoveredOrder(other, job) < 0 && other.status !== 'skipped_duplicate')
+  const hit = findDuplicate(job, pool)
+  const original = hit ? pool.find((other) => other === hit.match) : undefined
+  return hit && original ? { reason: hit.reason, original } : null
 }
 
 /** Why a posting looks like a ghost job, using the facts read from its description. */

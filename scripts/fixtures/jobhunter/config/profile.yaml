@@ -1,0 +1,79 @@
+# A fictional job-hunter profile.yaml for Sam Rivera, the demo persona, in the old tool's
+# shape. Like the real old file it mixes true and untrue claims: "Orbital Widgets" and its
+# numbers are invented on purpose, so the importer test can check that nothing is trusted.
+personal:
+  first_name: "Sam"
+  last_name: "Rivera"
+  preferred_name: "Sam"
+  email: "sam.rivera@example.com"
+  phone: "+1-905-555-0142"
+  linkedin: "https://linkedin.example.com/in/sam-rivera-sample"
+  github: "https://github.example.com/sam-rivera-sample"
+  portfolio: "https://sam-rivera.example.com"
+  location:
+    city: "Hamilton"
+    province: "ON"
+    country: "Canada"
+    relocate_to: ["Toronto", "Waterloo", "Remote"]
+    open_to_remote: true
+    open_to_hybrid: true
+    open_to_onsite: false
+
+demographics:
+  gender_identity: "Prefer not to say"  # privacy-check: allow (fictional; the importer must never read this section)
+  veteran: false
+
+authorization:
+  citizenship: "Canadian Citizen"
+  authorized_to_work_in_canada: true
+  authorized_to_work_in_us: false
+
+education:
+  degree: "BSc"
+  field: "Computer Science"
+  school: "Lakeshore University"
+  start_date: "September 2022"
+  graduation_date: "June 2026"
+  status: "Currently enrolled, final semester"
+
+employment_history:
+  - org: "Northwind Labs"
+    title: "Software Developer Co-op"
+    dates: "May 2025 to Aug 2025"
+  - org: "Orbital Widgets"
+    title: "Lead Engineer"
+    dates: "Jan 2024 to present"
+    notes: "Invented for the test: this employer never existed."
+
+skills:
+  languages:
+    expert: ["TypeScript"]
+    proficient: ["Python", "SQL"]
+    familiar: ["Go"]
+  frontend:
+    expert: ["React"]
+    proficient: []
+    familiar: ["Svelte"]
+
+targeting:
+  titles_want: ["Junior Software Developer", "New Grad Software Engineer"]
+  titles_avoid: ["Senior Software Engineer"]
+  experience_max_years: 3
+  dealbreaker_requirements: ["5+ years", "PhD required"]
+  preferred_keywords: ["React", "TypeScript"]
+  industries_avoid: ["Gambling"]
+  locations: ["Remote", "Hamilton", "Toronto"]
+
+application_answers:
+  "Are you legally authorized to work in Canada?": "Yes"
+  "Years of experience with React": "4"
+  "What are your salary expectations?": ""
+  "Gender": "Prefer not to say"  # privacy-check: allow (fictional; must come in blank)
+
+resume_bullets:
+  northwind:
+    - "Moved the shared React library to CSS variables so products could ship a dark theme"
+  orbital_widgets:
+    - "Cut page load time by 40% for 2 million users"
+  shelfmate:
+    - "Recorded each swap in one PostgreSQL transaction"

@@ -4,7 +4,7 @@ import { scoreJob } from '../../engine/score.ts'
 import { formatAge, formatAgeShort, relativeDay, sourceLabel } from './format.ts'
 import {
   companyFromUrl,
-  duplicateIndex,
+  duplicateOf,
   ghostFor,
   manualJob,
   markSkills,
@@ -33,27 +33,35 @@ describe('scoreFor', () => {
   })
 })
 
-describe('duplicateIndex', () => {
-  it('marks the later posting as the repeat, by URL first, then company and title', () => {
-    const first = makeJob({ id: 'a', url: 'https://boards.greenhouse.io/acme/jobs/1?gh_src=x', discoveredAt: '2026-11-01T00:00:00.000Z' })
-    const sameUrl = makeJob({
-      id: 'b',
-      title: 'Other title',
-      url: 'https://www.boards.greenhouse.io/acme/jobs/1',
-      discoveredAt: '2026-11-02T00:00:00.000Z',
-    })
-    const sameTitle = makeJob({ id: 'c', url: 'https://jobs.lever.co/acme/2', discoveredAt: '2026-11-03T00:00:00.000Z' })
-    const intern = makeJob({
-      id: 'd',
-      title: 'Junior Software Developer Intern',
-      url: 'https://jobs.lever.co/acme/3',
-      discoveredAt: '2026-11-03T00:00:00.000Z',
-    })
-    const index = duplicateIndex([sameTitle, intern, sameUrl, first])
-    expect(index.get('a')).toBeUndefined()
-    expect(index.get('b')).toEqual({ reason: 'url', original: first })
-    expect(index.get('c')).toEqual({ reason: 'company_title', original: first })
-    expect(index.get('d')).toBeUndefined()
+describe('duplicateOf', () => {
+  const first = makeJob({ id: 'a', url: 'https://boards.greenhouse.io/acme/jobs/1?gh_src=x', discoveredAt: '2026-11-01T00:00:00.000Z' })
+  const sameUrl = makeJob({
+    id: 'b',
+    title: 'Other title',
+    url: 'https://www.boards.greenhouse.io/acme/jobs/1',
+    discoveredAt: '2026-11-02T00:00:00.000Z',
+  })
+  const sameTitle = makeJob({ id: 'c', url: 'https://jobs.lever.co/acme/2', discoveredAt: '2026-11-03T00:00:00.000Z' })
+  const intern = makeJob({
+    id: 'd',
+    title: 'Junior Software Developer Intern',
+    url: 'https://jobs.lever.co/acme/3',
+    discoveredAt: '2026-11-03T00:00:00.000Z',
+  })
+  const jobs = [sameTitle, intern, sameUrl, first]
+
+  it('names the earlier posting, by URL first, then company and title', () => {
+    expect(duplicateOf(first, jobs)).toBeNull()
+    expect(duplicateOf(sameUrl, jobs)).toEqual({ reason: 'url', original: first })
+    expect(duplicateOf(sameTitle, jobs)).toEqual({ reason: 'company_title', original: first })
+    expect(duplicateOf(intern, jobs)).toBeNull()
+  })
+
+  it('follows a duplicate status set by a person or the scanner, even when the repeat was found first', () => {
+    const marked = { ...first, status: 'skipped_duplicate' as const }
+    const all = [marked, sameUrl, sameTitle]
+    expect(duplicateOf(marked, all)).toEqual({ reason: 'url', original: sameUrl })
+    expect(duplicateOf(sameUrl, all)).toBeNull()
   })
 })
 

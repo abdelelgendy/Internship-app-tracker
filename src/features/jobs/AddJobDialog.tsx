@@ -207,7 +207,7 @@ export function AddJobDialog({
         <section aria-label="Score preview" aria-live="polite" className="min-w-0 rounded-md bg-surface-2 p-3 text-[0.8125rem]">
           {preview ? (
             <div className="space-y-3">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-4 pl-2">
                 <ScoreMark score={preview.score} size="lg" />
                 <div className="min-w-0 space-y-1">
                   {preview.score ? <VerdictBadge verdict={preview.score.gate.verdict} /> : null}

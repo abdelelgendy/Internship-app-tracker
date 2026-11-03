@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { configure, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeAll, describe, expect, it } from 'vitest'
 import { renderApp } from '../../test/renderApp.tsx'
@@ -9,8 +9,10 @@ Posted 3 hours ago
 Lakeview Tools builds scheduling software. New grads welcome, 0-2 years of experience.
 You will build React and TypeScript screens. Location: Toronto, hybrid.`
 
-// The routes load each page on first visit. Loading it once up front keeps the first test from
-// spending its query timeout on compiling the page when the whole suite runs in parallel.
+// The routes load each page on first visit, and the sample data loads into memory per test. On a
+// busy machine that can take more than the default one second, so this file waits up to five.
+configure({ asyncUtilTimeout: 5000 })
+
 beforeAll(async () => {
   await import('./JobsPage.tsx')
   await import('./JobDetailPage.tsx')

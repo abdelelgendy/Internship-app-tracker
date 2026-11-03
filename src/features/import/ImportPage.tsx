@@ -58,7 +58,8 @@ export function ImportPage() {
   const [state, setState] = useState<State>({ kind: 'idle' })
   const [applying, setApplying] = useState(false)
   const [runs, setRuns] = useState(0)
-  const local = mode.kind === 'local'
+  // Local mode only exists on the dev server; the check lets the build drop the local branch.
+  const local = import.meta.env.DEV && mode.kind === 'local'
 
   function show(preview: ImportPreview) {
     setRuns((count) => count + 1)

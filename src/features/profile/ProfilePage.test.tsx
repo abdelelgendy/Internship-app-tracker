@@ -61,7 +61,7 @@ describe('Profile page', () => {
     expect(screen.getByText(/This is the demo profile, so it is read-only/)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Save profile' })).toBeNull()
 
-    await user.click(screen.getByRole('tab', { name: 'Answers' }))
+    await user.click(screen.getByRole('tab', { name: /^Answers/ }))
     expect(screen.getByText('One self-identification answer is hidden in the demo.')).toBeInTheDocument()
     expect(screen.queryByText('Demographic and equal opportunity questions')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Add answer' })).toBeNull()

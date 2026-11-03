@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { configure, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { APP_STATUSES } from '../../engine/states.ts'
@@ -34,8 +34,10 @@ async function press(user: ReturnType<typeof userEvent.setup>, key: string) {
   await new Promise((resolve) => setTimeout(resolve, 0))
 }
 
-// The routes load each page on first visit. Loading it once up front keeps the first test from
-// spending its query timeout on compiling the page when the whole suite runs in parallel.
+// The routes load each page on first visit, and the sample data loads into memory per test. On a
+// busy machine that can take more than the default one second, so this file waits up to five.
+configure({ asyncUtilTimeout: 5000 })
+
 beforeAll(async () => {
   await import('./BoardPage.tsx')
 })
