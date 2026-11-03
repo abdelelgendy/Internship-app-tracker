@@ -1,73 +1,49 @@
-# React + TypeScript + Vite
+# Shortlist
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A local-first job-search copilot for a new-grad software developer. It finds and scores postings, explains each score, prepares applications, reminds you to follow up, and records what happened.
 
-Currently, two official plugins are available:
+It never submits an application, never logs into anything, never automates LinkedIn and never stores a password. You review everything it prepares and you click submit yourself.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Status: being rebuilt from a first small tracker (see [docs/day-one](docs/day-one/README.md)). The app shell and shared UI are in place; the pages land feature by feature.
 
-## React Compiler
+## Your data stays on your machine
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+- Real data lives in one folder, set by `COPILOT_DATA_DIR` (default `.private/` in this repo). That folder is gitignored.
+- The public build and this repo only contain `sample-data/`: a fictional new grad, Sam Rivera, with sample postings and applications.
+- The banner at the top of the app always says which one you are looking at.
+- The data format is defined in [src/engine/types.ts](src/engine/types.ts).
 
-## Expanding the ESLint configuration
+## Run it
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Requires Node 22.13 or newer (or Node 24).
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+npm install
+npm run dev        # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+| Script | What it does |
+| --- | --- |
+| `npm run dev` | Start the app with hot reload |
+| `npm run build` | Type-check and build the static app into `dist/` |
+| `npm run preview` | Serve the built app |
+| `npm test` | Run the tests once (`npm run test:watch` to keep them running) |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | TypeScript, all projects |
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+The command-line tools (`import:jobhunter`, `scan`, `score`, `digest`, `export:csv`, `prefill`, `check:private`) are wired in `package.json` and arrive with their features. They run with Node's built-in TypeScript support, no build step.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Layout
+
 ```
+src/
+  engine/     pure TypeScript shared by the app and the scripts: types, scoring, states (no React, no Node APIs)
+  app/        the shell: routes, navigation, theme, keyboard shortcuts, data-source banner
+  ui/         shared components: Button, Dialog, Tabs, Badge, Toast and the rest
+  features/   one folder per page
+scripts/      Node command-line tools
+sample-data/  the fictional demo data
+docs/         notes, including the day-one app
+```
+
+Press `?` in the app for keyboard shortcuts.

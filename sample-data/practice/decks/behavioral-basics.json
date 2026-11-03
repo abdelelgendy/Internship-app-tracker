@@ -1,0 +1,102 @@
+{
+  "id": "behavioral-basics",
+  "title": "Behavioral basics",
+  "description": "Common behavioral questions with sample answers for Sam Rivera, a fictional new grad. Practise the shape of an answer, then write your own from your real stories.",
+  "cards": [
+    {
+      "id": "behavioral-tell-me-about-yourself",
+      "kind": "behavioral",
+      "difficulty": 1,
+      "tags": [
+        "intro"
+      ],
+      "prompt": "Tell me about yourself.",
+      "answer": "Keep it to about a minute: **now, before, next**.\n\n> I just finished a computer science degree at Lakeshore University. Before that I did a co-op at Northwind Labs on their React component library, and my capstone was Shelfmate, a book swap app the campus book club used for a term. I like frontend work where the details matter, like keyboard support and theming, and I am looking for a junior role where I ship to real users and learn from code review.",
+      "keyPoints": [
+        "Present, past, future in that order",
+        "One concrete project",
+        "Ends with what you want next",
+        "Under a minute"
+      ]
+    },
+    {
+      "id": "behavioral-disagreement",
+      "kind": "behavioral",
+      "difficulty": 2,
+      "tags": [
+        "teamwork",
+        "conflict"
+      ],
+      "prompt": "Tell me about a time you disagreed with a teammate.",
+      "answer": "Use a real disagreement about the work, not about a person, and show how it was settled.\n\n> On Shelfmate a teammate wanted to cut keyboard support from the shelf board to hit our demo date. I thought that would make the app unusable for one club member. We agreed to timebox it: I had two days, and if it was not done we would ship without it. I got it working in a day and a half by using the browser's built-in focus order instead of a custom one.",
+      "keyPoints": [
+        "A disagreement about the work",
+        "What each side wanted and why",
+        "How it was settled, such as a timebox",
+        "The result, honestly"
+      ]
+    },
+    {
+      "id": "behavioral-bug",
+      "kind": "behavioral",
+      "difficulty": 2,
+      "tags": [
+        "debugging"
+      ],
+      "prompt": "Tell me about a bug you are proud of fixing.",
+      "answer": "Walk through how you found it, not only what it was.\n\n> At my co-op an integration test failed about once a week. I logged the inputs each time it failed and noticed every failure was after 8pm. The test built \"today\" in local time but the server compared it in UTC, so after 8pm Eastern the dates disagreed. I changed the test to use a fixed UTC clock and it stopped failing for the rest of my term.",
+      "keyPoints": [
+        "The symptom",
+        "How you narrowed it down",
+        "The root cause",
+        "The fix and how you knew it worked"
+      ]
+    },
+    {
+      "id": "behavioral-failure",
+      "kind": "behavioral",
+      "difficulty": 2,
+      "tags": [
+        "growth"
+      ],
+      "prompt": "Tell me about a time you failed.",
+      "answer": "Pick a real failure with a lesson you still use.\n\n> Our first Shelfmate demo crashed when two people swapped the same book at once. I had tested with one browser only. Since then I write a test for the double-click and two-tab cases before I demo anything that writes data.",
+      "keyPoints": [
+        "A real failure, owned",
+        "What went wrong and why",
+        "What you do differently now"
+      ]
+    },
+    {
+      "id": "behavioral-learn-fast",
+      "kind": "behavioral",
+      "difficulty": 1,
+      "tags": [
+        "learning"
+      ],
+      "prompt": "Describe a time you had to learn something quickly.",
+      "answer": "> In my first week at Northwind Labs I had to work in a codebase that used CSS variables for theming, which I had never used. I read the three components that already used them, wrote a small test page, and asked my mentor to review my first change before I touched more. By the end of the week I had moved buttons over to the same pattern.",
+      "keyPoints": [
+        "What you had to learn and by when",
+        "How you learned it",
+        "How you checked your understanding",
+        "The outcome"
+      ]
+    },
+    {
+      "id": "behavioral-why-here",
+      "kind": "behavioral",
+      "difficulty": 1,
+      "tags": [
+        "motivation"
+      ],
+      "prompt": "Why do you want to work here?",
+      "answer": "Name something true and specific about the company, then connect it to your own work.\n\n> Your posting says the design system team is rebuilding components with theming in mind. I did that during my co-op and on Shelfmate, so I know where it gets hard, and I would like to do it at a larger scale with people who have done it longer.",
+      "keyPoints": [
+        "Something specific about this company",
+        "A link to your own work",
+        "What you want to learn there"
+      ]
+    }
+  ]
+}

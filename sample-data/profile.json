@@ -1,0 +1,400 @@
+{
+  "name": "Sam Rivera",
+  "preferredName": "Sam",
+  "email": "sam.rivera@example.com",
+  "links": {
+    "linkedin": "https://linkedin.example.com/in/sam-rivera-sample",
+    "github": "https://github.example.com/sam-rivera-sample",
+    "portfolio": "https://sam-rivera.example.com"
+  },
+  "location": {
+    "city": "Hamilton",
+    "region": "ON",
+    "country": "Canada",
+    "openTo": [
+      "remote",
+      "hybrid",
+      "onsite"
+    ],
+    "relocateTo": [
+      "Toronto",
+      "Waterloo"
+    ]
+  },
+  "authorization": {
+    "canada": "citizen",
+    "usRequiresSponsorship": true,
+    "notes": "Fictional persona. Canadian citizen; would need sponsorship to work in the US."
+  },
+  "education": [
+    {
+      "school": "Lakeshore University",
+      "degree": "BSc",
+      "field": "Computer Science",
+      "start": "2022-09",
+      "end": "2026-06",
+      "status": "completed",
+      "notes": "Fictional school."
+    }
+  ],
+  "experience": [
+    {
+      "org": "Northwind Labs",
+      "title": "Software Developer Co-op",
+      "start": "2025-05",
+      "end": "2025-08",
+      "location": "Toronto, ON",
+      "summary": "One four-month co-op term on a React component library.",
+      "bullets": [
+        "Moved buttons and form fields in the shared React library to CSS variables so products could ship a dark theme",
+        "Found and fixed a flaky integration test caused by a time zone assumption"
+      ],
+      "verified": true
+    },
+    {
+      "org": "Lakeshore University IT Services",
+      "title": "Help Desk Assistant (part-time)",
+      "start": "2023-09",
+      "end": "2026-04",
+      "location": "Hamilton, ON",
+      "summary": "Part-time student job answering hardware and account questions.",
+      "bullets": [
+        "Answered walk-in and email questions about accounts, Wi-Fi and printing"
+      ],
+      "verified": true
+    }
+  ],
+  "projects": [
+    {
+      "slug": "shelfmate",
+      "name": "Shelfmate",
+      "oneLiner": "A book swap web app for a campus book club (capstone project).",
+      "bullets": [
+        "Recorded each swap in one PostgreSQL transaction so a double click could not create two swaps",
+        "Built a drag and drop shelf board in React that also works with a keyboard"
+      ],
+      "stack": [
+        "TypeScript",
+        "React",
+        "Node.js",
+        "Express",
+        "PostgreSQL",
+        "Vitest"
+      ],
+      "url": "https://sam-rivera.example.com/shelfmate"
+    },
+    {
+      "slug": "transit-ping",
+      "name": "Transit Ping",
+      "oneLiner": "A small page that shows the next buses at nearby stops.",
+      "bullets": [
+        "Polls the city transit feed every 30 seconds and caches the last answer for poor connections"
+      ],
+      "stack": [
+        "TypeScript",
+        "Node.js",
+        "React"
+      ],
+      "url": "https://sam-rivera.example.com/transit-ping"
+    }
+  ],
+  "skills": [
+    {
+      "name": "TypeScript",
+      "level": "strong",
+      "evidence": "shelfmate"
+    },
+    {
+      "name": "JavaScript",
+      "level": "strong",
+      "evidence": "shelfmate"
+    },
+    {
+      "name": "React",
+      "level": "strong",
+      "evidence": "shelfmate"
+    },
+    {
+      "name": "CSS",
+      "level": "strong",
+      "evidence": "northwind-labs"
+    },
+    {
+      "name": "HTML",
+      "level": "strong"
+    },
+    {
+      "name": "Node.js",
+      "level": "working",
+      "evidence": "shelfmate"
+    },
+    {
+      "name": "Express",
+      "level": "working",
+      "evidence": "shelfmate"
+    },
+    {
+      "name": "PostgreSQL",
+      "level": "working",
+      "evidence": "shelfmate"
+    },
+    {
+      "name": "SQL",
+      "level": "working",
+      "evidence": "shelfmate"
+    },
+    {
+      "name": "Git",
+      "level": "working"
+    },
+    {
+      "name": "Vitest",
+      "level": "working",
+      "evidence": "shelfmate"
+    },
+    {
+      "name": "Python",
+      "level": "familiar",
+      "evidence": "coursework"
+    },
+    {
+      "name": "Java",
+      "level": "familiar",
+      "evidence": "coursework"
+    },
+    {
+      "name": "Docker",
+      "level": "familiar"
+    },
+    {
+      "name": "GraphQL",
+      "level": "familiar"
+    }
+  ],
+  "targeting": {
+    "titles": [
+      "Junior Software Developer",
+      "Software Developer",
+      "Junior Software Engineer",
+      "New Grad Software Engineer",
+      "Frontend Developer",
+      "Full Stack Developer",
+      "Junior Web Developer"
+    ],
+    "avoidTitles": [
+      "Senior",
+      "Staff",
+      "Principal",
+      "Lead",
+      "Manager",
+      "Director",
+      "Architect"
+    ],
+    "locations": [
+      "Hamilton",
+      "Burlington",
+      "Oakville",
+      "Toronto",
+      "Mississauga",
+      "Waterloo",
+      "Kitchener",
+      "Remote"
+    ],
+    "maxYears": 3,
+    "dealbreakers": [
+      "5+ years",
+      "7+ years",
+      "10+ years",
+      "Masters required",
+      "PhD required",
+      "US citizenship required",
+      "must reside in the United States"
+    ],
+    "preferredKeywords": [
+      "React",
+      "TypeScript",
+      "Node.js",
+      "PostgreSQL",
+      "new grad",
+      "junior",
+      "entry level",
+      "early career",
+      "full stack",
+      "frontend"
+    ],
+    "industriesPrefer": [
+      "SaaS",
+      "Developer tools",
+      "Education",
+      "Healthtech"
+    ],
+    "industriesAvoid": [
+      "Gambling",
+      "Defense"
+    ]
+  },
+  "answers": [
+    {
+      "id": "work-auth-canada",
+      "question": "Are you legally authorized to work in Canada?",
+      "patterns": [
+        "authorized to work in canada",
+        "eligible to work in canada",
+        "legally entitled to work in canada"
+      ],
+      "answer": "Yes"
+    },
+    {
+      "id": "sponsorship-canada",
+      "question": "Will you now or in the future require sponsorship to work in Canada?",
+      "patterns": [
+        "sponsorship to work in canada",
+        "require sponsorship",
+        "need sponsorship"
+      ],
+      "answer": "No"
+    },
+    {
+      "id": "sponsorship-us",
+      "question": "Will you require sponsorship to work in the United States?",
+      "patterns": [
+        "sponsorship to work in the united states",
+        "authorized to work in the us",
+        "authorized to work in the united states"
+      ],
+      "answer": "Yes, for a role based in the US. Not needed for a remote role from Canada.",
+      "needsHuman": true,
+      "note": "A US-based role and a remote role from Canada need different answers. Decide per job."
+    },
+    {
+      "id": "years-experience",
+      "question": "How many years of professional software experience do you have?",
+      "patterns": [
+        "years of professional experience",
+        "years of experience",
+        "how many years"
+      ],
+      "answer": "Less than 1 year: one four-month co-op term",
+      "note": "Count the co-op only. Do not round up."
+    },
+    {
+      "id": "start-date",
+      "question": "When can you start?",
+      "patterns": [
+        "when can you start",
+        "start date",
+        "earliest start"
+      ],
+      "answer": "Two weeks after an offer"
+    },
+    {
+      "id": "relocation",
+      "question": "Are you willing to relocate?",
+      "patterns": [
+        "willing to relocate",
+        "open to relocation",
+        "relocate"
+      ],
+      "answer": "Yes, to Toronto or Waterloo. Elsewhere depends on the role."
+    },
+    {
+      "id": "salary",
+      "question": "What are your salary expectations?",
+      "patterns": [
+        "salary expectations",
+        "expected salary",
+        "desired compensation",
+        "compensation expectations"
+      ],
+      "answer": "",
+      "needsHuman": true,
+      "note": "Decide per role using the posted range."
+    },
+    {
+      "id": "previously-worked",
+      "question": "Have you worked for this company before?",
+      "patterns": [
+        "worked for this company",
+        "worked here before",
+        "former employee"
+      ],
+      "answer": "No"
+    },
+    {
+      "id": "how-heard",
+      "question": "How did you hear about this role?",
+      "patterns": [
+        "how did you hear",
+        "where did you hear",
+        "how did you find"
+      ],
+      "answer": "Company careers page",
+      "note": "Change it for referrals."
+    },
+    {
+      "id": "eeo",
+      "question": "Demographic and equal opportunity questions",
+      "patterns": [
+        "gender identity",
+        "ethnicity",
+        "veteran",
+        "disability",
+        "indigenous",
+        "visible minority"
+      ],
+      "answer": "",
+      "needsHuman": true,
+      "note": "Answered by hand on each form, or declined."
+    }
+  ],
+  "coverLetter": {
+    "signature": "Sam Rivera",
+    "maxWords": 150,
+    "voiceNotes": [
+      "Plain words, like talking to a smart friend",
+      "Name one thing about the company that is true and specific",
+      "One project that matches the posting",
+      "No more than two sentences in a row that start with \"I\""
+    ],
+    "bannedPhrases": [
+      "I am writing to express",
+      "passionate about",
+      "team player",
+      "fast-paced environment",
+      "proven track record",
+      "synergy"
+    ]
+  },
+  "facts": [
+    {
+      "label": "Degree",
+      "value": "BSc in Computer Science, Lakeshore University, 2026",
+      "source": "Transcript"
+    },
+    {
+      "label": "Co-op",
+      "value": "Four-month software developer co-op at Northwind Labs, May to August 2025",
+      "source": "Co-op offer letter"
+    },
+    {
+      "label": "Shelfmate",
+      "value": "Capstone book swap app used by the campus book club for one term",
+      "source": "shelfmate/README.md"
+    },
+    {
+      "label": "Shelfmate transactions",
+      "value": "Each swap is written in one PostgreSQL transaction",
+      "source": "shelfmate/server/swaps.ts"
+    },
+    {
+      "label": "Transit Ping polling",
+      "value": "Polls the transit feed every 30 seconds",
+      "source": "transit-ping/src/poll.ts"
+    },
+    {
+      "label": "Northwind theming",
+      "value": "Moved shared components to CSS variables for a dark theme",
+      "source": "Co-op work term report"
+    }
+  ]
+}

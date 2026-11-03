@@ -1,0 +1,148 @@
+{
+  "id": "shortlist-engine",
+  "title": "How Shortlist works",
+  "project": "shortlist",
+  "description": "Questions about this app itself: how it scores postings, keeps data safe and stays honest. The answers point at the code in this repo.",
+  "cards": [
+    {
+      "id": "shortlist-score-in-code",
+      "kind": "design",
+      "difficulty": 1,
+      "tags": [
+        "scoring",
+        "testing"
+      ],
+      "prompt": "Why does Shortlist compute fit scores in code instead of asking a language model for a number?",
+      "answer": "A score that comes from code is **repeatable and explainable**. The same posting and profile always give the same total, every point belongs to a named part with a reason, and the parts add up to the total.\n\nThe tool Shortlist replaced asked a model to write scores, and most of its breakdowns broke their own caps or did not add up. In code, the rubric has tests at every band boundary, and a `rubricVersion` on each result says which rules produced it.\n\nA model can still help at the edges, for example drafting text a person edits.",
+      "keyPoints": [
+        "Deterministic: same input, same score",
+        "Every point has a part and a reason",
+        "Parts always sum to the total",
+        "Rubric is tested at its boundaries",
+        "Results record the rubric version"
+      ],
+      "source": "src/engine/score.ts"
+    },
+    {
+      "id": "shortlist-recency-gate",
+      "kind": "explain",
+      "difficulty": 2,
+      "tags": [
+        "scoring",
+        "gates"
+      ],
+      "prompt": "Explain the recency gate. Why does a posting with a high score still get held?",
+      "answer": "Fresh postings get the most replies, so the bar to apply rises with age:\n\n| Age | Minimum score |\n| --- | --- |\n| under 12 hours | 65 |\n| 12 to 24 hours | 70 |\n| 24 to 48 hours | 75 |\n| 48 to 72 hours | 85 |\n\nPast 72 hours a posting needs an exception, and past 7 days it is skipped. A posting with **no known date** is held rather than guessed, because a wrong date is worse than no date.",
+      "keyPoints": [
+        "Thresholds rise with age: 65, 70, 75, 85",
+        "Over 7 days is skipped",
+        "Unknown age is held, not guessed",
+        "Holding is reversible; a person can still apply"
+      ],
+      "source": "src/engine/gates.ts"
+    },
+    {
+      "id": "shortlist-dedup-level",
+      "kind": "concept",
+      "difficulty": 2,
+      "tags": [
+        "dedup"
+      ],
+      "prompt": "Two postings at the same company are \"Software Engineer\" and \"Software Engineer Intern\". Why must the duplicate check keep them apart?",
+      "answer": "The old scanner normalized titles by stripping words like \"junior\" and \"intern\", so the internship and the full-time role produced the same key and one was dropped as a duplicate.\n\nShortlist keeps the **level** in the key: company, normalized title and level (intern, new grad, junior, mid, senior). It also matches words on boundaries, so \"Internal Tools Engineer\" is not read as an internship.",
+      "keyPoints": [
+        "Normalizing titles can merge different roles",
+        "The level stays part of the key",
+        "Word boundaries: \"intern\" is not \"internal\""
+      ],
+      "source": "src/engine/dedup.ts"
+    },
+    {
+      "id": "shortlist-prepared-vs-applied",
+      "kind": "design",
+      "difficulty": 1,
+      "tags": [
+        "states"
+      ],
+      "prompt": "Why are \"prepared\" and \"applied\" separate statuses?",
+      "answer": "Shortlist never submits anything. It can get an application ready (answers chosen, cover letter drafted) but only a person can send it. If \"ready\" and \"sent\" were one status, follow-up reminders would start counting from a day nothing was sent.\n\nRecording `applied` only when you confirm you submitted keeps the follow-up dates and response rates true.",
+      "keyPoints": [
+        "The tool prepares, the person submits",
+        "Follow-ups count from the real submit date",
+        "Stats stay honest"
+      ],
+      "source": "src/engine/states.ts"
+    },
+    {
+      "id": "shortlist-jsonl-upsert",
+      "kind": "code",
+      "difficulty": 2,
+      "tags": [
+        "data",
+        "files"
+      ],
+      "prompt": "Jobs live in a JSONL file that both the app and command-line scripts write. How does a save avoid losing data?",
+      "answer": "Three rules:\n\n1. **Readers take the last line for an id.** A script may append a newer copy of a row instead of rewriting the file.\n2. **Writers replace an id in place and keep every line they cannot parse**, so a save never deletes data it does not understand.\n3. **Writes are atomic**: the new file is written beside the old one and renamed over it, so nobody reads half a file.\n\nThe dev server also runs writes to the same file one at a time, so two saves arriving together cannot drop a row.",
+      "keyPoints": [
+        "Last copy of an id wins on read",
+        "Unparseable lines are kept verbatim",
+        "Temp file plus rename",
+        "Writes to one file are serialized"
+      ],
+      "source": "src/data/jsonl.ts"
+    },
+    {
+      "id": "shortlist-local-api-header",
+      "kind": "concept",
+      "difficulty": 3,
+      "tags": [
+        "security",
+        "web"
+      ],
+      "prompt": "The dev server exposes the private data folder at /__local. What stops another website open in the same browser from reading it?",
+      "answer": "Several checks, because each covers a different attack:\n\n- **Loopback only**: requests from another machine are refused even if the server listens on the network.\n- **Host header**: must be localhost, which stops DNS rebinding (a hostile domain that resolves to 127.0.0.1).\n- **Origin header**: a request from another origin is refused.\n- **Custom header**: every request needs `x-shortlist-local: 1`. A cross-site page cannot add a custom header without a CORS preflight, and nothing approves it for a foreign origin.\n\nThe middleware is also only part of the dev server, never the production build.",
+      "keyPoints": [
+        "Loopback address check",
+        "Host check against DNS rebinding",
+        "Origin check",
+        "Custom header forces a preflight",
+        "Not in the production build"
+      ],
+      "source": "vite.config.ts"
+    },
+    {
+      "id": "shortlist-demo-dates",
+      "kind": "explain",
+      "difficulty": 1,
+      "tags": [
+        "demo"
+      ],
+      "prompt": "The public demo was written on one day, but its postings always look a few hours old. How?",
+      "answer": "The sample data records the moment it was written for. When the demo loads it, every timestamp is moved forward by the time since then, rounded to the minute, and plain dates by the number of calendar days. Relative ages stay exactly as written, so the recency gate and follow-up reminders behave the same on any day.",
+      "keyPoints": [
+        "Data has an anchor time",
+        "Shift by elapsed time on load",
+        "Relative ages are preserved"
+      ],
+      "source": "src/data/sampleRepo.ts"
+    },
+    {
+      "id": "shortlist-two-users",
+      "kind": "system-design",
+      "difficulty": 3,
+      "tags": [
+        "architecture"
+      ],
+      "prompt": "Shortlist is local-first for one person. What would have to change for a team of career coaches to share it?",
+      "answer": "The engine would stay the same; the data layer is what changes.\n\n- Files on one machine become a database with one owner per row and access rules.\n- The dev middleware becomes a real API with sign-in, since \"localhost only\" no longer identifies the user.\n- Concurrent edits need versioning or last-write-wins rules per field.\n- Private data now leaves the machine, so it needs encryption at rest, retention rules and a way to export or delete it.\n\nKeeping the engine pure (no storage, no network) is what makes this a data-layer change rather than a rewrite.",
+      "keyPoints": [
+        "Engine unchanged because it is pure",
+        "Database with per-user access rules",
+        "Authentication replaces localhost",
+        "Concurrency and versioning",
+        "Privacy obligations once data leaves the machine"
+      ],
+      "source": "src/data/repo.ts"
+    }
+  ]
+}

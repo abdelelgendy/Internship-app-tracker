@@ -1,0 +1,58 @@
+[
+  {
+    "name": "Maple Ledger",
+    "ats": "greenhouse",
+    "slug": "mapleledger-sample",
+    "verified": true,
+    "notes": "Fictional company for the Shortlist demo. Bookkeeping software for small businesses."
+  },
+  {
+    "name": "Harbourlight Health",
+    "ats": "ashby",
+    "slug": "harbourlight-sample",
+    "verified": true,
+    "notes": "Fictional company for the Shortlist demo. Appointment booking for physiotherapy clinics."
+  },
+  {
+    "name": "Quillstack",
+    "ats": "lever",
+    "slug": "quillstack-sample",
+    "verified": true,
+    "notes": "Fictional company for the Shortlist demo. Documentation tooling for developer teams."
+  },
+  {
+    "name": "Brightfern Learning",
+    "ats": "greenhouse",
+    "slug": "brightfern-sample",
+    "verified": true,
+    "notes": "Fictional company for the Shortlist demo. Homework and grading tools for high schools."
+  },
+  {
+    "name": "Cobalt Orchard",
+    "ats": "ashby",
+    "slug": "cobaltorchard-sample",
+    "verified": true,
+    "notes": "Fictional company for the Shortlist demo. Scheduling software for field service crews."
+  },
+  {
+    "name": "Loonie Logistics",
+    "ats": "lever",
+    "slug": "loonielogistics-sample",
+    "verified": true,
+    "notes": "Fictional company for the Shortlist demo. Shipment tracking for regional carriers."
+  },
+  {
+    "name": "Pinecrest Analytics",
+    "ats": "greenhouse",
+    "slug": "pinecrest-sample",
+    "verified": true,
+    "notes": "Fictional company for the Shortlist demo. Forecasting dashboards for grocery chains."
+  },
+  {
+    "name": "Glacier Byte",
+    "ats": "manual",
+    "careersUrl": "https://glacierbyte.example.com/careers",
+    "verified": false,
+    "notes": "Fictional company for the Shortlist demo. No public job board API, so postings are added by hand."
+  }
+]

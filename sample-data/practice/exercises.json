@@ -1,0 +1,63 @@
+[
+  {
+    "id": "exercise-jsonl-upsert",
+    "title": "Rebuild the JSONL upsert",
+    "project": "shortlist",
+    "goal": "Reading and writing files safely, and handling bad input without losing data.",
+    "spec": "Without AI help, write `upsertJsonl(text, rows)`:\n\n- `text` is the current file, one JSON object per line.\n- `rows` are objects with an `id`.\n- Replace each row where its id first appears, append rows that are new, and drop older copies of an updated id.\n- Keep every line you cannot parse, exactly as it was.\n\nThen write `readJsonl(text)` that returns one row per id, using the **last** copy.",
+    "acceptance": [
+      "An update replaces the row in place",
+      "A new row is appended",
+      "Unparseable lines survive a save",
+      "Duplicate ids read as the last copy",
+      "An empty file stays empty"
+    ],
+    "timeboxMinutes": 45,
+    "hints": [
+      "Split on \"\\n\" and skip blank lines",
+      "A Map keeps insertion order"
+    ]
+  },
+  {
+    "id": "exercise-recency-gate",
+    "title": "Table-driven recency gate",
+    "goal": "Writing a small pure function with boundary tests.",
+    "spec": "Write `recencyGate(ageHours, score)` returning `apply`, `hold` or `skip` using the table in the \"How Shortlist works\" deck. Unknown age is `hold`. Then write a table-driven test that checks every boundary: 11.9, 12, 23.9, 24, 47.9, 48, 71.9, 72 and 168 hours.",
+    "acceptance": [
+      "Every boundary has a test",
+      "Unknown age returns hold",
+      "Over 168 hours returns skip",
+      "No test depends on the current time"
+    ],
+    "timeboxMinutes": 40
+  },
+  {
+    "id": "exercise-debounced-search",
+    "title": "Debounced search box in React",
+    "goal": "Effects, cleanup and race conditions in React.",
+    "spec": "Build a search box that filters a list of 500 job titles. Wait 250 ms after the last keystroke before filtering, cancel a pending filter when a new key arrives, and never show results for an older query after a newer one.",
+    "acceptance": [
+      "Typing quickly filters once",
+      "Clearing the box shows everything",
+      "Results never flash an older query",
+      "Works with the keyboard only"
+    ],
+    "timeboxMinutes": 60,
+    "hints": [
+      "Return a cleanup function from the effect",
+      "Keep the query that produced the results next to them"
+    ]
+  },
+  {
+    "id": "exercise-sql-pipeline",
+    "title": "Application funnel in SQL",
+    "goal": "GROUP BY, joins and avoiding division by zero.",
+    "spec": "Create tables `jobs(id, company, posted_at)` and `applications(id, job_id, status, applied_at)` in PostgreSQL. Write queries for: applications per status; response rate per company (any status past `applied` counts as a response); and the median days from posting to applying.",
+    "acceptance": [
+      "Counts match a hand count on 10 rows",
+      "A company with no applications shows 0%, not an error",
+      "Median uses percentile_cont"
+    ],
+    "timeboxMinutes": 75
+  }
+]

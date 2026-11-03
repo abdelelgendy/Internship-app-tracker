@@ -1,68 +1,232 @@
+@import 'tailwindcss';
+
+/*
+  Shortlist design tokens.
+  Colors are CSS custom properties on :root (light) and [data-theme='dark'], so every utility
+  follows the theme without dark: variants. Tailwind's default palette is removed on purpose:
+  use these names (bg-surface, text-fg-muted, border-line, bg-info-soft text-info-ink, ...).
+
+  Surfaces   bg (page), surface (cards, inputs), surface-2 (hover, wells)
+  Lines      line (dividers, card edges), line-strong (buttons, keycaps), line-input (form fields, 3:1)
+  Text       fg, fg-muted, fg-subtle (all 4.5:1 or better on every surface)
+  Accent     accent (the highlighter fill), accent-soft (large tinted areas), accent-ink (accent as
+             text or graphic on a surface), on-accent (text on the accent)
+  Status     {neutral,info,warn,violet,success,danger,muted}-soft backgrounds with matching -ink text
+  Other      danger + on-danger (destructive buttons), focus (keyboard ring), scrim (dialog backdrop)
+*/
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+@theme {
+  --color-*: initial;
+  --font-sans: 'Atkinson Hyperlegible Next Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Atkinson Hyperlegible Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+}
+
+@theme inline {
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-line-input: var(--line-input);
+  --color-fg: var(--fg);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-on-danger: var(--on-danger);
+  --color-focus: var(--focus);
+  --color-scrim: var(--scrim);
+  --color-neutral-soft: var(--neutral-soft);
+  --color-neutral-ink: var(--neutral-ink);
+  --color-info-soft: var(--info-soft);
+  --color-info-ink: var(--info-ink);
+  --color-warn-soft: var(--warn-soft);
+  --color-warn-ink: var(--warn-ink);
+  --color-violet-soft: var(--violet-soft);
+  --color-violet-ink: var(--violet-ink);
+  --color-success-soft: var(--success-soft);
+  --color-success-ink: var(--success-ink);
+  --color-danger-soft: var(--danger-soft);
+  --color-danger-ink: var(--danger-ink);
+  --color-muted-soft: var(--muted-soft);
+  --color-muted-ink: var(--muted-ink);
+}
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  color-scheme: light;
+  --bg: #f4f4f0;
+  --surface: #fdfdfb;
+  --surface-2: #edede8;
+  --line: #dcdcd5;
+  --line-strong: #c5c6be;
+  --line-input: #85877e;
+  --fg: #1c1d19;
+  --fg-muted: #55574f;
+  --fg-subtle: #686a61;
+  --accent: #ffe14a;
+  --accent-soft: #fff3b0;
+  --accent-ink: #7a6400;
+  --on-accent: #1c1d19;
+  --danger: #b3261b;
+  --on-danger: #fdfdfb;
+  --focus: #1c1d19;
+  --scrim: rgb(28 29 25 / 0.42);
+  --pop-shadow: 0 1px 2px rgb(28 29 25 / 0.06), 0 10px 28px rgb(28 29 25 / 0.12);
+  --neutral-soft: #ecece6;
+  --neutral-ink: #44463e;
+  --info-soft: #e2eaf8;
+  --info-ink: #1d4a9e;
+  --warn-soft: #fbe9da;
+  --warn-ink: #8f3d0c;
+  --violet-soft: #ece5f9;
+  --violet-ink: #5530a8;
+  --success-soft: #dff0e3;
+  --success-ink: #1b6535;
+  --danger-soft: #f9e1de;
+  --danger-ink: #9e2418;
+  --muted-soft: #efefea;
+  --muted-ink: #5f6158;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
+[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #1a1b18;
+  --surface: #22231f;
+  --surface-2: #2b2c28;
+  --line: #363731;
+  --line-strong: #4a4c45;
+  --line-input: #6e7066;
+  --fg: #edede6;
+  --fg-muted: #b3b5a9;
+  --fg-subtle: #9a9c90;
+  --accent: #f2d64b;
+  --accent-soft: #3a3521;
+  --accent-ink: #f2d64b;
+  --on-accent: #1a1b18;
+  --danger: #e26d61;
+  --on-danger: #1a1b18;
+  --focus: #f2d64b;
+  --scrim: rgb(10 10 8 / 0.6);
+  --pop-shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 28px rgb(0 0 0 / 0.4);
+  --neutral-soft: #2f302a;
+  --neutral-ink: #d2d4c9;
+  --info-soft: #1c2a42;
+  --info-ink: #a3c1f6;
+  --warn-soft: #3a2616;
+  --warn-ink: #f2b483;
+  --violet-soft: #2c2340;
+  --violet-ink: #cbb6f6;
+  --success-soft: #1b3123;
+  --success-ink: #93d5a9;
+  --danger-soft: #3c1e1b;
+  --danger-ink: #f3a89f;
+  --muted-soft: #262722;
+  --muted-ink: #a0a296;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
+@utility shadow-pop {
+  box-shadow: var(--pop-shadow);
+}
+
+@layer base {
+  html {
+    scrollbar-gutter: stable;
+    -webkit-text-size-adjust: 100%;
   }
-  a:hover {
-    color: #747bff;
+
+  /* A modal dialog is open: the page behind it should not scroll. */
+  html:has(dialog[open]) {
+    overflow: hidden;
   }
-  button {
-    background-color: #f9f9f9;
+
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-size: var(--text-sm);
+    line-height: 1.5;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    accent-color: var(--fg);
+  }
+}
+
+/*
+  The signature: the current item is marked with a highlighter swipe, slightly uneven and
+  tilted like a real marker, drawn in from the left when it appears.
+*/
+.mark-swipe {
+  position: relative;
+  isolation: isolate;
+  color: var(--on-accent);
+}
+
+.mark-swipe::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0.06em -0.34em -0.02em -0.3em;
+  border-radius: 0.3em 0.6em 0.34em 0.62em / 0.6em 0.3em 0.62em 0.36em;
+  background: var(--accent);
+  transform: rotate(-1.4deg) skewX(-7deg);
+  transform-origin: left center;
+  animation: mark-in 280ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes mark-in {
+  from {
+    transform: rotate(-1.4deg) skewX(-7deg) scaleX(0);
+  }
+}
+
+/* Older engines do not pass custom properties to ::backdrop, hence the literal fallback. */
+dialog::backdrop {
+  background-color: var(--scrim, rgb(28 29 25 / 0.42));
+}
+
+/* Thin bar at the top of the page while the next route's code loads. */
+.route-progress {
+  transform-origin: left center;
+  animation: route-progress 1.2s cubic-bezier(0.1, 0.6, 0.2, 1) both;
+}
+
+@keyframes route-progress {
+  from {
+    transform: scaleX(0.05);
+  }
+  to {
+    transform: scaleX(0.85);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

@@ -1,0 +1,56 @@
+[
+  {
+    "id": "story-flaky-test",
+    "title": "The test that failed after 8pm",
+    "situation": "During my co-op at Northwind Labs, an integration test failed about once a week and the team had started re-running it until it passed.",
+    "task": "I offered to find out why, since re-running hid any real failures.",
+    "action": "I logged the inputs on every failure and saw they all happened after 8pm Eastern. The test built the current date in local time while the server compared in UTC. I switched the test to a fixed UTC clock and wrote up the cause in the pull request.",
+    "result": "The test stopped failing for the rest of my term, and the team stopped re-running CI by habit. I did not measure time saved.",
+    "source": "Co-op work term report",
+    "skills": [
+      "Debugging",
+      "Testing",
+      "Time zones"
+    ],
+    "questions": [
+      "Tell me about a bug you are proud of fixing.",
+      "Tell me about a time you took initiative."
+    ]
+  },
+  {
+    "id": "story-keyboard-timebox",
+    "title": "Keeping keyboard support in Shelfmate",
+    "situation": "Two weeks before our capstone demo, my teammate wanted to cut keyboard support from the shelf board to save time.",
+    "task": "One book club member navigated with a keyboard only, so I wanted to keep it without risking the demo.",
+    "action": "I proposed a two-day timebox. I replaced our custom focus handling with the browser's own focus order and added tests with Testing Library.",
+    "result": "Keyboard support shipped in a day and a half and the demo went ahead on time.",
+    "source": "shelfmate/docs/retro.md",
+    "skills": [
+      "Accessibility",
+      "React",
+      "Negotiation"
+    ],
+    "questions": [
+      "Tell me about a time you disagreed with a teammate.",
+      "How do you handle a deadline?"
+    ]
+  },
+  {
+    "id": "story-double-swap",
+    "title": "The demo that crashed on a double swap",
+    "situation": "At our first Shelfmate demo, two people swapped the same book at the same time and the app recorded both.",
+    "task": "Fix it before the club started using the app the next week.",
+    "action": "I moved the swap into one PostgreSQL transaction that checks the book is still available, and added a test that sends two swaps at once.",
+    "result": "No double swaps were reported during the term the club used it. I now test the two-tab case before I demo anything that writes data.",
+    "source": "shelfmate/server/swaps.ts",
+    "skills": [
+      "PostgreSQL",
+      "Transactions",
+      "Testing"
+    ],
+    "questions": [
+      "Tell me about a time you failed.",
+      "Describe a technical decision you made."
+    ]
+  }
+]
