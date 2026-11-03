@@ -6,7 +6,7 @@ import type { Profile, SkillLevel } from './types.ts'
  *
  * An alias with an uppercase letter matches case-sensitively, because the lowercase form is an
  * ordinary English word ("React" the library, "react quickly" the verb; "REST" vs "the rest").
- * Words too ambiguous to match at all ("go", "r", "express", "spring") are left out.
+ * Words too ambiguous to match at all ("go", "r", "spring") are left out.
  */
 interface SkillDef {
   name: string
@@ -27,7 +27,7 @@ const VOCABULARY: readonly SkillDef[] = [
   { name: 'Svelte', aliases: ['svelte', 'sveltekit'] },
   { name: 'Redux', aliases: ['redux'] },
   { name: 'Node.js', aliases: ['Node', 'node.js', 'nodejs'] },
-  { name: 'Express', aliases: ['express.js', 'expressjs'] },
+  { name: 'Express', aliases: ['Express', 'express.js', 'expressjs'] },
   { name: 'NestJS', aliases: ['nestjs', 'nest.js'] },
   { name: 'Hono', aliases: ['hono'] },
   { name: 'HTML', aliases: ['html', 'html5'] },
@@ -106,10 +106,6 @@ const VOCABULARY: readonly SkillDef[] = [
 ]
 
 const LEVEL_RANK: Record<SkillLevel, number> = { strong: 3, working: 2, familiar: 1 }
-
-export function levelRank(level: SkillLevel): number {
-  return LEVEL_RANK[level]
-}
 
 function aliasRegex(alias: string | RegExp, ignoreCase: boolean): RegExp {
   return typeof alias === 'string' ? phraseRegex(alias, !ignoreCase && /[A-Z]/.test(alias)) : alias
@@ -193,7 +189,7 @@ export function indexProfileSkills(skills: Profile['skills']): ProfileSkill[] {
 export function profileLevelFor(index: readonly ProfileSkill[], canonical: string): SkillLevel | null {
   let best: SkillLevel | null = null
   for (const entry of index) {
-    if (entry.canonical.includes(canonical) && (best === null || levelRank(entry.level) > levelRank(best))) {
+    if (entry.canonical.includes(canonical) && (best === null || LEVEL_RANK[entry.level] > LEVEL_RANK[best])) {
       best = entry.level
     }
   }

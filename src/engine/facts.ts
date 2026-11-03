@@ -13,7 +13,8 @@ const NUMBER_WORDS: Record<string, number> = {
   zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
   ten: 10, eleven: 11, twelve: 12, fifteen: 15,
 }
-const N = `(\\d{1,2}|${Object.keys(NUMBER_WORDS).join('|')})`
+// Number words need their own boundaries so "someone" never reads as "one".
+const N = `(\\d{1,2}|\\b(?:${Object.keys(NUMBER_WORDS).join('|')})\\b)`
 const YEARS = `(?:years?|yrs?)`
 
 // Each rule turns a regex match into [min, max]; max null means open-ended ("3+ years").
@@ -41,30 +42,40 @@ const PREFERRED_CUE = /\b(?:preferred|a plus|is a plus|nice to have|nice-to-have
 const PREFERRED_HEADER = /^(?:nice to have|nice-to-haves?|bonus(?: points)?|preferred(?: qualifications)?|pluses|it'?s a plus|assets?)\b/iu
 const REQUIRED_HEADER = /^(?:requirements|required|qualifications|minimum qualifications|basic qualifications|what you'll need|what you need|must haves?|you have|about you|who you are|responsibilities|what we're looking for)\b/iu
 
-interface YearsMention {
-  min: number
-  max: number | null
+interface Sentence {
+  text: string
+  /** Under a "Nice to have" heading, or marked preferred, a plus or an asset. */
   preferred: boolean
 }
 
-function yearsMentionsIn(line: string, preferredSection: boolean): YearsMention[] {
-  const mentions: YearsMention[] = []
-  for (const sentence of sentences(line)) {
-    const taken: [number, number][] = []
-    const preferred = preferredSection || PREFERRED_CUE.test(sentence)
-    for (const [pattern, read] of YEAR_RULES) {
-      pattern.lastIndex = 0
-      for (let m = pattern.exec(sentence); m; m = pattern.exec(sentence)) {
-        const start = m.index
-        const end = start + m[0].length
-        if (taken.some(([a, b]) => start < b && end > a)) continue
-        const after = sentence.slice(end)
-        const before = sentence.slice(Math.max(0, start - 40), start)
-        if (NOT_EXPERIENCE_AFTER.test(after) || COMPANY_HISTORY_BEFORE.test(before) || !EXPERIENCE_AFTER.test(after)) continue
-        taken.push([start, end])
-        const [min, max] = read(m)
-        mentions.push({ min: Math.min(min, max ?? min), max: max === null ? null : Math.max(min, max), preferred })
-      }
+/** Sentences of the posting, each marked required or preferred by its heading and its own wording. */
+function classifySentences(jdText: string): Sentence[] {
+  const out: Sentence[] = []
+  let preferredSection = false
+  for (const rawLine of jdText.split(/\n+/)) {
+    const line = normalizeText(rawLine).replace(/^[-*\u2022\s]+/u, '')
+    if (PREFERRED_HEADER.test(line)) preferredSection = true
+    else if (REQUIRED_HEADER.test(line)) preferredSection = false
+    for (const text of sentences(line)) out.push({ text, preferred: preferredSection || PREFERRED_CUE.test(text) })
+  }
+  return out
+}
+
+function yearsMentionsIn(sentence: string): { min: number; max: number | null }[] {
+  const mentions: { min: number; max: number | null }[] = []
+  const taken: [number, number][] = []
+  for (const [pattern, read] of YEAR_RULES) {
+    pattern.lastIndex = 0
+    for (let m = pattern.exec(sentence); m; m = pattern.exec(sentence)) {
+      const start = m.index
+      const end = start + m[0].length
+      if (taken.some(([a, b]) => start < b && end > a)) continue
+      const after = sentence.slice(end)
+      const before = sentence.slice(Math.max(0, start - 40), start)
+      if (NOT_EXPERIENCE_AFTER.test(after) || COMPANY_HISTORY_BEFORE.test(before) || !EXPERIENCE_AFTER.test(after)) continue
+      taken.push([start, end])
+      const [min, max] = read(m)
+      mentions.push({ min: Math.min(min, max ?? min), max: max === null ? null : Math.max(min, max) })
     }
   }
   return mentions
@@ -76,19 +87,22 @@ function yearsMentionsIn(line: string, preferredSection: boolean): YearsMention[
  * "Nice to have" heading are ignored, so "5+ years is a plus" does not disqualify a junior role.
  */
 export function extractYears(jdText: string): { min: number | null; max: number | null } {
-  const required: YearsMention[] = []
-  let preferredSection = false
-  for (const rawLine of jdText.split(/\n+/)) {
-    const line = normalizeText(rawLine).replace(/^[-*•\s]+/, '')
-    if (PREFERRED_HEADER.test(line)) preferredSection = true
-    else if (REQUIRED_HEADER.test(line)) preferredSection = false
-    required.push(...yearsMentionsIn(line, preferredSection).filter((mention) => !mention.preferred))
-  }
+  const required = classifySentences(jdText)
+    .filter((sentence) => !sentence.preferred)
+    .flatMap((sentence) => yearsMentionsIn(sentence.text))
   if (required.length === 0) return { min: null, max: null }
   const strictest = required.reduce((best, mention) =>
     mention.min > best.min || (mention.min === best.min && best.max === null && mention.max !== null) ? mention : best,
   )
   return { min: strictest.min, max: strictest.max }
+}
+
+/** Skills the posting names only as nice to have. Skill overlap is judged on the rest. */
+export function extractPreferredSkills(jdText: string, title: string): string[] {
+  const all = findSkills(`${title}\n${jdText}`)
+  const classified = classifySentences(jdText)
+  const required = new Set(findSkills([title, ...classified.filter((s) => !s.preferred).map((s) => s.text)].join('\n')))
+  return all.filter((skill) => !required.has(skill))
 }
 
 // ---------- Level ----------
@@ -237,6 +251,7 @@ export function extractFacts(jdText: string, title: string, location = ''): JobF
     yearsMin: years.min,
     yearsMax: years.max,
     skills: findSkills(`${title}\n${jdText}`),
+    preferredSkills: extractPreferredSkills(jdText, title),
     usOnly: usLocation || usOnlyPhrases(jdText).length > 0,
     requiresEnrollment: coopTitle || enrollmentPhrases(jdText, title).length > 0,
     ghostPhrases: textMatcher(jdText).which(GHOST_PHRASES),

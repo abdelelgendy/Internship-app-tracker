@@ -67,12 +67,14 @@ export function recencyGate(
 
   const key = normalizeCompany(company)
   const isException = exceptionCompanies.some((name) => normalizeCompany(name) === key)
-  if (!isException || hours > LOCATION_EXCEPTION.maxAgeHours) {
-    return { verdict: 'skip', reason: `${age} That is past the 72-hour window.` }
+  if (!isException) return { verdict: 'skip', reason: `${age} That is past the 72-hour window.` }
+  if (hours > LOCATION_EXCEPTION.maxAgeHours) {
+    return { verdict: 'skip', reason: `${age} That is past the 7-day window, even for ${company}.` }
   }
+  const rule = `${company} is on the exception list, open for 7 days at ${LOCATION_EXCEPTION.minScore}.`
   return score >= LOCATION_EXCEPTION.minScore
-    ? { verdict: 'apply', reason: `${age} ${company} is an exception company, open for 7 days at ${LOCATION_EXCEPTION.minScore}; score ${score} meets it.` }
-    : { verdict: 'skip', reason: `${age} ${company} is an exception company, open for 7 days at ${LOCATION_EXCEPTION.minScore}; score ${score} is below it.` }
+    ? { verdict: 'apply', reason: `${age} ${rule} Score ${score} meets it.` }
+    : { verdict: 'skip', reason: `${age} ${rule} Score ${score} is below it.` }
 }
 
 /** Tier 1 is entry level, tier 2 asks for a little experience or does not say, tier 3 is a stretch. */

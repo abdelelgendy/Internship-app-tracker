@@ -59,6 +59,10 @@ describe('recencyGate', () => {
       'Posted 30 hours ago. Score 72 is below the 75 needed at 24 to 48 hours.',
     )
     expect(recencyGate(90, hoursAgo(80), NOW, 'Northwind Apps').reason).toBe('Posted 3 days ago. That is past the 72-hour window.')
+    expect(recencyGate(90, hoursAgo(80), NOW, 'Shopify').reason).toBe(
+      'Posted 3 days ago. Shopify is on the exception list, open for 7 days at 85. Score 90 meets it.',
+    )
+    expect(recencyGate(90, hoursAgo(200), NOW, 'Shopify').reason).toBe('Posted 8 days ago. That is past the 7-day window, even for Shopify.')
   })
 })
 

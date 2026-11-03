@@ -20,10 +20,11 @@ export interface EmailClassification {
 
 const NEGATED_OFFER = /\b(?:unable to|not able to|cannot|can't|won't be able to|not in a position to|decided not to|will not)\s+(?:extend|offer|move)/iu
 
-const RULES: readonly { kind: Exclude<EmailKind, 'other'>; test: (subject: string, sentence: string) => string | null }[] = [
+// Each rule reads one sentence at a time (the subject counts as one); `whole` is the full email.
+const RULES: readonly { kind: Exclude<EmailKind, 'other'>; test: (subject: string, sentence: string, whole: string) => string | null }[] = [
   {
     kind: 'offer',
-    test: (subject, sentence) => {
+    test: (subject, sentence, whole) => {
       const strong = sentence.match(
         /\b(?:offer letter|offer of employment|employment offer|job offer|formal offer|compensation package|extend (?:you )?an offer|extending (?:you )?an offer|(?:pleased|excited|happy|delighted|thrilled) to (?:extend|offer) (?:you )?(?:an? |the )?(?:offer|position|role|job)|offer you (?:the|a|this) (?:position|role|job))\b/iu,
       )
@@ -31,7 +32,7 @@ const RULES: readonly { kind: Exclude<EmailKind, 'other'>; test: (subject: strin
       if (/\bcongratulations\b/iu.test(sentence) && /\boffer\b/iu.test(sentence) && !NEGATED_OFFER.test(sentence)) return 'congratulations ... offer'
       // "Welcome aboard" also opens ATS sign-up emails, so it needs a second offer signal.
       const welcome = sentence.match(/\b(?:welcome to the team|welcome aboard)\b/iu)
-      if (welcome && /\b(?:offer|start date|first day)\b/iu.test(`${subject} ${sentence}`)) return welcome[0]
+      if (welcome && /\b(?:offer|start date|first day)\b/iu.test(whole)) return welcome[0]
       // A bare "Offer ends tonight" is marketing; the subject needs to read like an employment offer.
       return sentence === subject && /^(?:re:\s*)?(?:your (?:job )?offer|job offer|offer letter|offer of employment|offer\s*[-:|])/iu.test(subject)
         ? 'subject: offer'
@@ -93,9 +94,11 @@ const ALERT: Record<EmailKind, EmailClassification['alert']> = {
 
 export function classifyEmail(subject: string, body: string): EmailClassification {
   const cleanSubject = normalizeText(subject)
-  const parts = [cleanSubject, ...sentences(normalizeText(body))]
+  const cleanBody = normalizeText(body)
+  const parts = [cleanSubject, ...sentences(cleanBody)]
+  const whole = `${cleanSubject}\n${cleanBody}`
   for (const rule of RULES) {
-    const evidence = parts.map((sentence) => rule.test(cleanSubject, sentence)).filter((hit): hit is string => hit !== null)
+    const evidence = parts.map((sentence) => rule.test(cleanSubject, sentence, whole)).filter((hit): hit is string => hit !== null)
     if (evidence.length > 0) {
       return { kind: rule.kind, suggestedStatus: STATUS[rule.kind], alert: ALERT[rule.kind], evidence: [...new Set(evidence)] }
     }

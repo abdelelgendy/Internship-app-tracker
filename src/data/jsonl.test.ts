@@ -28,27 +28,27 @@ describe('readJsonl', () => {
 describe('upsertJsonl', () => {
   it('replaces a row in place and appends new rows in the order given', () => {
     const text = '{"id":"a","v":1}\n{"id":"b","v":1}\n'
-    expect(upsertJsonl(text, [{ id: 'c' }, { id: 'a', v: 2 } as { id: string }])).toBe('{"id":"a","v":2}\n{"id":"b","v":1}\n{"id":"c"}\n')
+    expect(upsertJsonl(text, [{ id: 'c' }, { id: 'a', v: 2 }])).toBe('{"id":"a","v":2}\n{"id":"b","v":1}\n{"id":"c"}\n')
   })
 
   it('drops older copies of an updated id but leaves other duplicates alone', () => {
     const text = '{"id":"a","v":1}\n{"id":"b","v":1}\n{"id":"a","v":2}\n{"id":"b","v":2}\n'
-    expect(upsertJsonl(text, [{ id: 'a', v: 3 } as { id: string }])).toBe('{"id":"a","v":3}\n{"id":"b","v":1}\n{"id":"b","v":2}\n')
+    expect(upsertJsonl(text, [{ id: 'a', v: 3 }])).toBe('{"id":"a","v":3}\n{"id":"b","v":1}\n{"id":"b","v":2}\n')
   })
 
   it('keeps lines it cannot parse exactly as they were', () => {
     const text = '{"id":"a"}\n{broken\n{"no":"id"}\n'
-    expect(upsertJsonl(text, [{ id: 'a', ok: true } as { id: string }])).toBe('{"id":"a","ok":true}\n{broken\n{"no":"id"}\n')
+    expect(upsertJsonl(text, [{ id: 'a', ok: true }])).toBe('{"id":"a","ok":true}\n{broken\n{"no":"id"}\n')
   })
 
   it('uses the last update when the same id is saved twice in one call', () => {
-    expect(upsertJsonl('', [{ id: 'a', v: 1 }, { id: 'a', v: 2 }] as { id: string }[])).toBe('{"id":"a","v":2}\n')
+    expect(upsertJsonl('', [{ id: 'a', v: 1 }, { id: 'a', v: 2 }])).toBe('{"id":"a","v":2}\n')
   })
 
   it('agrees with readJsonl after any mix of appends and upserts', () => {
     let text = '{"id":"a","v":1}\n'
     text += '{"id":"a","v":2}\n' // a script appended a newer copy
-    text = upsertJsonl(text, [{ id: 'b', v: 1 } as { id: string }])
+    text = upsertJsonl(text, [{ id: 'b', v: 1 }])
     expect(readJsonl<{ id: string; v: number }>(text).rows).toEqual([
       { id: 'a', v: 2 },
       { id: 'b', v: 1 },

@@ -36,6 +36,7 @@ describe('extractYears', () => {
     'Must be 18 years of age or older.',
     'We offer a 2 year warranty.',
     'No experience requirements listed.',
+    'Looking for someone years ahead in experience.',
   ])('ignores years that are not about the candidate: %s', (text) => {
     expect(extractYears(text)).toEqual({ min: null, max: null })
   })
@@ -139,12 +140,21 @@ describe('extractFacts', () => {
       yearsMin: 1,
       yearsMax: 2,
       skills: ['React', 'TypeScript', 'PostgreSQL'],
+      preferredSkills: [],
       usOnly: false,
       requiresEnrollment: false,
       ghostPhrases: ['talent pool', 'future openings'],
       salaryText: '$70,000 - $85,000 CAD per year',
       advancedDegreeRequired: false,
     })
+  })
+
+  it('marks skills named only as nice to have', () => {
+    const jd = 'Requirements\n- React and TypeScript\nNice to have\n- Docker or Kubernetes\n- More React\nBonus if you know Go via golang.'
+    const facts = extractFacts(jd, 'Frontend Developer')
+    expect(facts.skills).toEqual(['React', 'TypeScript', 'Docker', 'Kubernetes', 'Go'])
+    expect(facts.preferredSkills).toEqual(['Docker', 'Kubernetes', 'Go'])
+    expect(extractFacts('React. Docker is a plus.', 'Developer').preferredSkills).toEqual(['Docker'])
   })
 
   it('treats a co-op title as requiring enrollment', () => {

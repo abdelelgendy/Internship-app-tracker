@@ -44,6 +44,7 @@ export interface JobFacts {
   yearsMin?: number | null
   yearsMax?: number | null
   skills?: string[]            // normalized skill names found in the description
+  preferredSkills?: string[]   // the subset of skills named only as nice to have
   usOnly?: boolean             // explicitly requires US work authorization or residence
   requiresEnrollment?: boolean // co-op or internship that requires being a current student
   ghostPhrases?: string[]

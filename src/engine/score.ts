@@ -3,8 +3,8 @@ import { experienceBand, STRETCH_MIN_SCORE } from './experience.ts'
 import { extractFacts } from './facts.ts'
 import { recencyGate } from './gates.ts'
 import {
-  isUsOnlyRemoteLocation,
   detectWorkplace,
+  isUsOnlyRemoteLocation,
   looksLikeSoftwareTitle,
   normalizeLocation,
   normalizeText,
@@ -76,8 +76,11 @@ function titlePart(title: string, targets: readonly string[]): Part {
   return part('title', label, 20, 0, 'Not a software title.')
 }
 
-function skillsPart(jobSkills: readonly string[], skills: readonly ProfileSkill[]): Part {
+function skillsPart(facts: JobFacts, skills: readonly ProfileSkill[]): Part {
   const label = 'Skill overlap'
+  // Nice-to-have skills do not count against you; required ones decide the overlap.
+  const preferred = new Set(facts.preferredSkills ?? [])
+  const jobSkills = (facts.skills ?? []).filter((name) => !preferred.has(name))
   if (jobSkills.length === 0) {
     return part('skills', label, 30, SKILL_OVERLAP_BANDS[4].points, 'No known skills found in the posting, so overlap gets the minimum.')
   }
@@ -223,7 +226,7 @@ export function scoreJob(job: Job, profile: Profile, now: Instant): ScoreResult 
 
   const parts: Part[] = [
     titlePart(job.title, profile.targeting.titles),
-    skillsPart(jobSkills, skills),
+    skillsPart(facts, skills),
     ...experienceParts(facts),
     locationPart(job, job.jdText ?? '', profile),
     techPart(new Set(jobSkills), jd, skills),

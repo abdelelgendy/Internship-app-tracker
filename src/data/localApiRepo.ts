@@ -17,7 +17,8 @@ function client(baseUrl: string) {
   const call = (path: string, init: RequestInit = {}) => {
     const headers = new Headers(init.headers)
     headers.set(LOCAL_API_HEADER, '1')
-    return fetch(`${baseUrl}/${path.split('/').map(encodeURIComponent).join('/')}`, { ...init, headers, cache: 'no-store' })
+    // The middleware answers with cache-control: no-store, so nothing here is cached.
+    return fetch(`${baseUrl}/${path.split('/').map(encodeURIComponent).join('/')}`, { ...init, headers })
   }
   const ok = async (response: Response): Promise<Response> => {
     if (!response.ok) throw await errorFrom(response)
@@ -36,10 +37,10 @@ function client(baseUrl: string) {
       await ok(await call(`rows/${file}`, { method: 'POST', body: JSON.stringify(rows), headers: { 'content-type': 'application/json' } }))
     },
     async listIds(folder: string): Promise<string[]> {
-      return (await ok(await call(`list/${folder}`))).json()
+      return (await ok(await call(`list/${folder}`))).json() as Promise<string[]>
     },
     async status(): Promise<LocalStatus> {
-      return (await ok(await call('status'))).json()
+      return (await ok(await call('status'))).json() as Promise<LocalStatus>
     },
   }
 }

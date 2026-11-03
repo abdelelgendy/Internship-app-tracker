@@ -50,7 +50,7 @@ export function readJsonl<T extends { id: string }>(text: string): JsonlRows<T> 
 }
 
 /** Returns the file with each row replaced where its id first appears, or appended when new. */
-export function upsertJsonl(text: string, updates: readonly { id: string }[]): string {
+export function upsertJsonl<T extends { id: string }>(text: string, updates: readonly T[]): string {
   const pending = new Map(updates.map((row) => [row.id, row]))
   const written = new Set<string>()
   const out: string[] = []

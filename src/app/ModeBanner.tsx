@@ -36,7 +36,8 @@ function ResetSampleData({ reset }: { reset: () => Promise<void> }) {
     <>
       <button
         type="button"
-        className="rounded-sm font-medium text-fg underline underline-offset-2 hover:text-fg-muted"
+        // The padding makes a 24px tap target; the negative margin keeps the banner's height.
+        className="-my-1 rounded-sm py-1 font-medium text-fg underline underline-offset-2 hover:text-fg-muted"
         onClick={() => setConfirming(true)}
       >
         Reset sample data

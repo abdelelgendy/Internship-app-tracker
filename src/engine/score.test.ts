@@ -95,6 +95,11 @@ describe('skill overlap bands', () => {
     expect(pointsFor(score({ title: 'Software Developer', jdText: skills }), 'skills')).toBe(points)
   })
 
+  it('does not count nice-to-have skills against you', () => {
+    const result = score({ title: 'Software Developer', jdText: 'React, TypeScript, Node.js and PostgreSQL. Kotlin and Java are a plus.' })
+    expect(pointsFor(result, 'skills')).toBe(30)
+  })
+
   it('counts familiar skills as missing', () => {
     const result = score({ title: 'Software Developer', jdText: 'Docker and AWS.' })
     expect(pointsFor(result, 'skills')).toBe(3)

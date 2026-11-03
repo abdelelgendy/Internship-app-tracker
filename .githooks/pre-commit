@@ -1,0 +1,5 @@
+#!/bin/sh
+# Refuses commits that contain personal data. Turn it on once per clone:
+#   git config core.hooksPath .githooks
+# See docs/PRIVACY.md for what it checks.
+exec node "$(git rev-parse --show-toplevel)/scripts/check-private.mjs"
