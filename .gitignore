@@ -1,0 +1,25 @@
+.private/
+.env*
+*.local
+*.pdf
+output/
+node_modules/
+dist/
+coverage/
+playwright-report/
+test-results/
+
+# Real data lives only in the data directory (COPILOT_DATA_DIR, default .private/).
+# The public repo ships fictional sample data in sample-data/.
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Editor and OS files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.sw?
