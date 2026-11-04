@@ -14,10 +14,10 @@
  * again changes nothing. Decks, exercises and stories are written in job-hunter and only read in
  * Shortlist, so newer copies replace older ones. The profile is replaced only when asked.
  */
-import { toIso, toMillis } from '../../src/engine/dates.ts'
-import { companyTitleKey, urlKey } from '../../src/engine/dedup.ts'
-import { detectWorkplace, normalizeCompany } from '../../src/engine/normalize.ts'
-import { normalizeStatus, QUEUE_STATUSES } from '../../src/engine/states.ts'
+import { toIso, toMillis } from '../engine/dates.ts'
+import { companyTitleKey, urlKey } from '../engine/dedup.ts'
+import { detectWorkplace, normalizeCompany } from '../engine/normalize.ts'
+import { normalizeStatus, QUEUE_STATUSES } from '../engine/states.ts'
 import type {
   Application,
   AppStatus,
@@ -31,8 +31,8 @@ import type {
   QueueStatus,
   StarStory,
   Workplace,
-} from '../../src/engine/types.ts'
-import { isFileId } from '../../src/data/layout.ts'
+} from '../engine/types.ts'
+import { isFileId } from '../data/layout.ts'
 
 // ---------- Reading the folder ----------
 

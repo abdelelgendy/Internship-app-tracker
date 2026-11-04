@@ -21,7 +21,7 @@ personal:
 
 demographics:
   gender_identity: "Prefer not to say"  # privacy-check: allow (fictional; the importer must never read this section)
-  veteran: false
+  veteran: false  # privacy-check: allow (fictional)
 
 authorization:
   citizenship: "Canadian Citizen"

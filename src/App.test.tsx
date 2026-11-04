@@ -11,12 +11,10 @@ describe('app shell', () => {
     expect(router.state.location.pathname).toBe('/today')
   })
 
-  it('renders a placeholder for every page in the navigation', async () => {
-    for (const item of NAV_ITEMS) {
-      const view = renderApp(item.to)
-      expect(await screen.findByRole('heading', { level: 1, name: item.label })).toBeInTheDocument()
-      view.unmount()
-    }
+  // One test per page: rendered in one loop they shared the 5-second budget and timed out under load.
+  it.each(NAV_ITEMS.map((item) => [item.label, item.to] as const))('renders the %s page from the navigation', async (label, to) => {
+    renderApp(to)
+    expect(await screen.findByRole('heading', { level: 1, name: label })).toBeInTheDocument()
   })
 
   it('renders the detail routes with their ids', async () => {

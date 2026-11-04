@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { makeApplication, TZ } from './fixtures.ts'
 import { followUpDue, nextAction } from './followups.ts'
+import { localDay, localDaysBetween } from './dates.ts'
 import type { Application } from './types.ts'
 
 // November 2026: the 2nd is a Monday. Toronto is on EST (UTC-5) from November 1.
@@ -16,6 +17,17 @@ describe('followUpDue', () => {
     ['2026-11-07T04:30:00.000Z', '2026-11-14T04:30:00.000Z'], // Friday 23:30 in Toronto stays Friday
   ])('applied %s -> due %s', (appliedAt, due) => {
     expect(followUpDue({ appliedAt }, TZ)).toBe(due)
+  })
+
+  it.each([
+    ['2026-10-28T04:30:00.000Z', '2026-10-28', '2026-11-04'], // Wed 00:30 EDT, due after the switch to EST
+    ['2026-03-05T04:30:00.000Z', '2026-03-04', '2026-03-11'], // Wed 23:30 EST, due after the switch to EDT
+  ])('lands exactly 7 local days later across a DST change: %s', (appliedAt, appliedDay, dueDay) => {
+    const due = followUpDue({ appliedAt }, TZ)
+    expect(due).not.toBeNull()
+    expect(localDay(appliedAt, TZ)).toBe(appliedDay)
+    expect(localDay(due!, TZ)).toBe(dueDay)
+    expect(localDaysBetween(appliedAt, due!, TZ)).toBe(7)
   })
 
   it('is null before there is an applied date', () => {

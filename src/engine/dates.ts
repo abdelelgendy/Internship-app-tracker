@@ -47,6 +47,46 @@ function partsIn(ms: number, timeZone: string): { day: string; weekday: number }
   }
 }
 
+const clockFormatters = new Map<string, Intl.DateTimeFormat>()
+
+/** The local wall-clock time of an instant, written as epoch milliseconds read as UTC. */
+function wallClock(ms: number, timeZone: string): number {
+  let formatter = clockFormatters.get(timeZone)
+  if (!formatter) {
+    formatter = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      hourCycle: 'h23',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      second: 'numeric',
+    })
+    clockFormatters.set(timeZone, formatter)
+  }
+  const parts: Record<string, number> = {}
+  for (const part of formatter.formatToParts(ms)) parts[part.type] = Number(part.value)
+  return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second, ms % 1000)
+}
+
+/** The instant whose local wall-clock time is `wall`; the second pass settles times near a DST change. */
+function fromWallClock(wall: number, timeZone: string): number {
+  const first = wall - (wallClock(wall, timeZone) - wall)
+  return wall - (wallClock(first, timeZone) - first)
+}
+
+/**
+ * The same local time a number of calendar days later, skipping Saturdays and Sundays when
+ * `weekdaysOnly` is set. Adding days of 24 hours drifts by an hour across a DST change, which
+ * can land on the wrong local day near midnight.
+ */
+export function addLocalDays(at: Instant, days: number, timeZone: string, { weekdaysOnly = false } = {}): number {
+  let wall = wallClock(requireMillis(at), timeZone) + days * DAY_MS
+  while (weekdaysOnly && [0, 6].includes(new Date(wall).getUTCDay())) wall += DAY_MS
+  return fromWallClock(wall, timeZone)
+}
+
 function requireMillis(at: Instant): number {
   const ms = toMillis(at)
   if (ms === null) throw new RangeError(`Not a valid date: ${String(at)}`)
@@ -61,11 +101,6 @@ export function localDay(at: Instant, timeZone: string): string {
 /** 0 for Sunday through 6 for Saturday, in the given zone. */
 export function localWeekday(at: Instant, timeZone: string): number {
   return partsIn(requireMillis(at), timeZone).weekday
-}
-
-export function isWeekend(at: Instant, timeZone: string): boolean {
-  const weekday = localWeekday(at, timeZone)
-  return weekday === 0 || weekday === 6
 }
 
 function dayNumber(day: string): number {

@@ -25,4 +25,7 @@ export function buttonClass({ variant = 'secondary', size = 'md' }: { variant?: 
 
 /** Shared look for text inputs, textareas and selects. */
 export const controlClass =
-  'block w-full min-w-0 rounded-md border border-line-input bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle transition-colors hover:border-fg-subtle disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-danger'
+  'block w-full min-w-0 rounded-md border border-line-input bg-surface px-3 text-sm text-fg placeholder:text-fg-subtle transition-colors hover:border-fg-subtle disabled:cursor-not-allowed disabled:opacity-60 aria-invalid:border-danger [&[readonly]]:border-dashed [&[readonly]]:border-line [&[readonly]]:bg-transparent [&[readonly]]:hover:border-line'
+
+/** A read-only value shown as text in the shape of a field: dashed, no fill, and it wraps. */
+export const readOnlyValueClass = 'block w-full min-w-0 rounded-md border border-dashed border-line px-3 py-1.5 text-sm break-words text-fg'

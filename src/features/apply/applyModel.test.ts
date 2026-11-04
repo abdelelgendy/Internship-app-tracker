@@ -134,6 +134,14 @@ describe('recordSubmission', () => {
     expect(result.app.history.at(-1)).toEqual({ status: 'applied', at, by: 'me' })
   })
 
+  it('keeps answers already recorded on the application, letting the kit override the same question', () => {
+    const prefilled = { ...draft, answersUsed: { 'Authorized in Canada?': 'Yes', 'Start date?': 'Two weeks' } }
+    const kept = recordSubmission(prefilled, { at, answers: {} }, TZ)
+    expect(kept.ok && kept.app.answersUsed).toEqual({ 'Authorized in Canada?': 'Yes', 'Start date?': 'Two weeks' })
+    const merged = recordSubmission(prefilled, { at, answers: { 'Start date?': 'One month', 'Relocate?': 'No' } }, TZ)
+    expect(merged.ok && merged.app.answersUsed).toEqual({ 'Authorized in Canada?': 'Yes', 'Start date?': 'One month', 'Relocate?': 'No' })
+  })
+
   it('refuses an application that is already past applied', () => {
     expect(recordSubmission(makeApplication({ status: 'rejected' }), { at, answers: {} }, TZ).ok).toBe(false)
   })

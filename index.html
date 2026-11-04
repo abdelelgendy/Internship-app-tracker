@@ -4,16 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Shortlist, a local-first job-search copilot. It prepares, explains, reminds and records; you submit every application yourself." />
-    <meta name="theme-color" content="#f4f4f0" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#1a1b18" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f4f4f0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>Shortlist</title>
     <script>
-      // Runs before first paint so the page never flashes the wrong theme. Keep in step with src/app/theme.ts.
+      // Runs before first paint so the page never flashes the wrong theme. Keep in step with src/app/theme.ts,
+      // including the browser bar color, which follows the theme chosen in the app, not only the system's.
       try {
         var saved = localStorage.getItem('shortlist:theme')
         var dark = saved === 'dark' || (saved !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
         document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+        document.querySelector('meta[name="theme-color"]').content = dark ? '#1a1b18' : '#f4f4f0'
       } catch {
         document.documentElement.dataset.theme = 'light'
       }

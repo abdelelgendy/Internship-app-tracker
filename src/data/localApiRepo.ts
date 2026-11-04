@@ -8,33 +8,53 @@ import type {
   Profile,
   StarStory,
 } from '../engine/types.ts'
-import { readJsonl } from './jsonl.ts'
+import { readJsonl, rowFingerprint } from './jsonl.ts'
 import { idFile } from './layout.ts'
-import { errorFrom, LOCAL_API_BASE, LOCAL_API_HEADER, type LocalStatus } from './localApi.ts'
-import { emptyProgress, type Repo } from './repo.ts'
+import { errorFrom, LOCAL_API_BASE, LOCAL_API_HEADER, STALE_ROWS_STATUS, type LocalStatus } from './localApi.ts'
+import { emptyProgress, StaleDataError, type Repo } from './repo.ts'
 
 function client(baseUrl: string) {
-  const call = (path: string, init: RequestInit = {}) => {
+  // The fingerprint of each row as this tab last read or wrote it, sent with every save.
+  const seen = new Map<string, string>()
+  const seenKey = (file: string, id: string) => `${file}\n${id}`
+  const call = (path: string, init: RequestInit = {}, query = '') => {
     const headers = new Headers(init.headers)
     headers.set(LOCAL_API_HEADER, '1')
     // The middleware answers with cache-control: no-store, so nothing here is cached.
-    return fetch(`${baseUrl}/${path.split('/').map(encodeURIComponent).join('/')}`, { ...init, headers })
+    return fetch(`${baseUrl}/${path.split('/').map(encodeURIComponent).join('/')}${query}`, { ...init, headers })
   }
   const ok = async (response: Response): Promise<Response> => {
     if (!response.ok) throw await errorFrom(response)
     return response
   }
   return {
+    /** Null when the file does not exist yet. */
     async readText(file: string): Promise<string | null> {
-      const response = await call(`files/${file}`)
-      return response.status === 404 ? null : (await ok(response)).text()
+      const response = await call(`files/${file}`, {}, '?optional')
+      return response.status === 204 || response.status === 404 ? null : (await ok(response)).text()
     },
     async writeText(file: string, text: string): Promise<void> {
       await ok(await call(`files/${file}`, { method: 'PUT', body: text, headers: { 'content-type': 'text/plain' } }))
     },
+    /** Rows by id, remembering each row's fingerprint so a later save can be checked against it. */
+    readRows<T extends { id: string }>(file: string, text: string): T[] {
+      const { rows, issues } = readJsonl<T>(text)
+      if (issues.length > 0) console.warn(`[shortlist] Skipped ${issues.length} unreadable line(s) in ${file}; saves keep them as they are.`, issues)
+      for (const row of rows) seen.set(seenKey(file, row.id), rowFingerprint(row))
+      return rows
+    },
     async upsertRows(file: string, rows: readonly { id: string }[]): Promise<void> {
       if (rows.length === 0) return
-      await ok(await call(`rows/${file}`, { method: 'POST', body: JSON.stringify(rows), headers: { 'content-type': 'application/json' } }))
+      const base = Object.fromEntries(
+        rows.flatMap((row) => {
+          const fingerprint = seen.get(seenKey(file, row.id))
+          return fingerprint ? [[row.id, fingerprint]] : []
+        }),
+      )
+      const response = await call(`rows/${file}`, { method: 'POST', body: JSON.stringify({ rows, base }), headers: { 'content-type': 'application/json' } })
+      if (response.status === STALE_ROWS_STATUS) throw new StaleDataError((await errorFrom(response)).message)
+      await ok(response)
+      for (const row of rows) seen.set(seenKey(file, row.id), rowFingerprint(row))
     },
     async listIds(folder: string): Promise<string[]> {
       return (await ok(await call(`list/${folder}`))).json() as Promise<string[]>
@@ -61,11 +81,7 @@ export function createLocalApiRepo({ baseUrl = LOCAL_API_BASE }: { baseUrl?: str
     return text === null ? fallback : (JSON.parse(text) as T)
   }
   const writeJson = (file: string, value: unknown) => api.writeText(file, `${JSON.stringify(value, null, 2)}\n`)
-  const readRows = async <T extends { id: string }>(file: string): Promise<T[]> => {
-    const { rows, issues } = readJsonl<T>((await api.readText(file)) ?? '')
-    if (issues.length > 0) console.warn(`[shortlist] Skipped ${issues.length} unreadable line(s) in ${file}; saves keep them as they are.`, issues)
-    return rows
-  }
+  const readRows = async <T extends { id: string }>(file: string): Promise<T[]> => api.readRows<T>(file, (await api.readText(file)) ?? '')
   const getDeck = async (id: string) => readJson<PracticeDeck | null>(idFile('practice/decks', id), null)
 
   return {

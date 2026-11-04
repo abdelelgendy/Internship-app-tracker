@@ -116,11 +116,29 @@ describe('transition', () => {
 
 describe('wasSubmitted', () => {
   it.each([
-    [makeApplication({ status: 'draft', history: [] }), false],
-    [makeApplication({ status: 'prepared', history: [] }), false],
+    [makeApplication({ status: 'draft', history: [], appliedAt: undefined }), false],
+    [makeApplication({ status: 'prepared', history: [], appliedAt: undefined }), false],
     [makeApplication({ status: 'applied' }), true],
-    [makeApplication({ status: 'withdrawn', history: [] }), true],
+    [makeApplication({ status: 'withdrawn', history: [], appliedAt: '2026-10-01T12:00:00Z' }), true],
+    [makeApplication({ status: 'rejected', history: [], appliedAt: undefined }), true],
   ])('%#', (app, expected) => {
     expect(wasSubmitted(app)).toBe(expected)
+  })
+
+  it('does not count a draft withdrawn before it was sent', () => {
+    const draft = makeApplication({ status: 'draft', history: [{ status: 'draft', at: '2026-10-01T12:00:00Z', by: 'me' }], appliedAt: undefined })
+    const result = transition(draft, 'withdrawn', '2026-10-02T12:00:00Z')
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.app.appliedAt).toBeUndefined()
+    expect(wasSubmitted(result.app)).toBe(false)
+  })
+
+  it('counts an application withdrawn after it was sent', () => {
+    const sent = transition(makeApplication({ status: 'draft', history: [], appliedAt: undefined }), 'applied', '2026-10-01T12:00:00Z')
+    if (!sent.ok) throw new Error(sent.reason)
+    const withdrawn = transition(sent.app, 'withdrawn', '2026-10-05T12:00:00Z')
+    if (!withdrawn.ok) throw new Error(withdrawn.reason)
+    expect(wasSubmitted(withdrawn.app)).toBe(true)
   })
 })

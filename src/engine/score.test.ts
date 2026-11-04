@@ -134,9 +134,17 @@ describe('experience', () => {
   it.each([
     ['3+ years of experience.', 'Asks for 3+ years; your limit is 2.'],
     ['4-6 years of experience.', 'Asks for 4+ years; your limit is 2.'],
+    ['4+ years as a software engineer.', 'Asks for 4+ years; your limit is 2.'],
+    ['4+ years as a full-stack developer.', 'Asks for 4+ years; your limit is 2.'],
+    ['Requirements\nExperience: 4+ years', 'Asks for 4+ years; your limit is 2.'],
+    ['Requirements\nYears of experience: 4+', 'Asks for 4+ years; your limit is 2.'],
+    ['4 years of relevant work in a SaaS company.', 'Asks for 4+ years; your limit is 2.'],
+    ['You bring 4+ years shipping production web apps.', 'Asks for 4+ years; your limit is 2.'],
   ])('disqualifies "%s"', (jdText, message) => {
     const result = score({ title: 'Software Developer', jdText })
     expect(result.disqualifiers).toContain(message)
+    expect(result.total).toBe(0)
+    expect(result.gate.verdict).toBe('skip')
   })
 
   it('does not allow the stretch when the limit is far below it', () => {
@@ -152,6 +160,7 @@ describe('location', () => {
   it.each<[Partial<Job>, number]>([
     [{ workplace: 'remote', location: 'Remote - Canada' }, 10],
     [{ workplace: 'remote', location: 'Remote - US' }, 0],
+    [{ workplace: 'remote', location: 'Remote - U.S.' }, 0],
     [{ workplace: 'onsite', location: 'Toronto, ON' }, 10],
     [{ workplace: 'hybrid', location: 'Burlington, Ontario' }, 8],
     [{ workplace: 'onsite', location: 'Ottawa, ON' }, 10],

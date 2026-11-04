@@ -80,3 +80,25 @@ export function rowsProblem(rows: unknown): string | null {
   const bad = rows.findIndex((row) => rowId(row) === null)
   return bad === -1 ? null : `Row ${bad} is not an object with a string "id"`
 }
+
+/**
+ * A short fingerprint of a row as stored. A writer sends the fingerprint of the row it read,
+ * so the file's owner can refuse a save over a row that changed since (by a script, or in
+ * another tab). FNV-1a over the row's JSON: equal rows always match, and a change shows.
+ */
+export function rowFingerprint(row: unknown): string {
+  let hash = 0x811c9dc5
+  for (const char of JSON.stringify(row)) {
+    hash ^= char.codePointAt(0)!
+    hash = Math.imul(hash, 0x01000193) >>> 0
+  }
+  return hash.toString(16).padStart(8, '0')
+}
+
+/** Ids whose stored row no longer matches the fingerprint the writer read. Ids without a base are not checked. */
+export function changedSince(text: string, bases: Readonly<Record<string, string>>): string[] {
+  const current = new Map(readJsonl(text).rows.map((row) => [row.id, rowFingerprint(row)]))
+  return Object.entries(bases)
+    .filter(([id, base]) => current.has(id) && current.get(id) !== base)
+    .map(([id]) => id)
+}

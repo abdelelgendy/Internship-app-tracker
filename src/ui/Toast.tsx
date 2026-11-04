@@ -10,6 +10,8 @@ interface ToastEntry extends ToastOptions {
 }
 
 const MAX_VISIBLE = 3
+/** Alt+N, the one shortcut that works anywhere, also while typing: it has a modifier (WCAG 2.1.4). */
+const TOAST_SHORTCUT = 'Alt+N'
 
 const stripes = {
   neutral: 'border-l-line-strong',
@@ -17,37 +19,55 @@ const stripes = {
   danger: 'border-l-danger-ink',
 }
 
+function announcementFor(options: ToastOptions): string {
+  const text = options.description ? `${options.title}. ${options.description}.` : `${options.title}.`
+  return options.action ? `${text} ${options.action.label} is available: press ${TOAST_SHORTCUT}.` : text
+}
+
 /**
  * Renders toasts in the corner and announces each one through a live region that is always in
  * the page; screen readers miss live regions that are inserted together with their text.
+ *
+ * A toast with an action (Undo) must be reachable by keyboard before it goes: Alt+N moves focus
+ * to the newest one, a toast pauses while it is hovered or holds focus, and when it closes with
+ * focus inside, focus goes back to where it came from instead of dropping to the page.
  */
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastEntry[]>([])
   const [announcement, setAnnouncement] = useState({ polite: '', assertive: '' })
   const nextId = useRef(1)
-  const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>())
+  const region = useRef<HTMLElement>(null)
+  // Where focus was before it moved into a toast, to return it there.
+  const returnTo = useRef<HTMLElement | null>(null)
 
   const dismiss = useCallback((id: number) => {
-    clearTimeout(timers.current.get(id))
-    timers.current.delete(id)
+    const holder = document.activeElement?.closest(`[data-toast-id="${id}"]`)
+    if (holder) {
+      const back = returnTo.current?.isConnected ? returnTo.current : document.getElementById('main')
+      back?.focus({ preventScroll: true })
+    }
     setToasts((current) => current.filter((toast) => toast.id !== id))
   }, [])
 
-  const show = useCallback(
-    (options: ToastOptions) => {
-      const id = nextId.current++
-      setToasts((current) => [...current.slice(-(MAX_VISIBLE - 1)), { ...options, id }])
-      const text = options.description ? `${options.title}. ${options.description}` : options.title
-      setAnnouncement(options.tone === 'danger' ? { polite: '', assertive: text } : { polite: text, assertive: '' })
-      timers.current.set(id, setTimeout(() => dismiss(id), options.durationMs ?? (options.action ? 10_000 : 5_000)))
-      return id
-    },
-    [dismiss],
-  )
+  const show = useCallback((options: ToastOptions) => {
+    const id = nextId.current++
+    setToasts((current) => [...current.slice(-(MAX_VISIBLE - 1)), { ...options, id }])
+    const text = announcementFor(options)
+    setAnnouncement(options.tone === 'danger' ? { polite: '', assertive: text } : { polite: text, assertive: '' })
+    return id
+  }, [])
 
   useEffect(() => {
-    const pending = timers.current
-    return () => pending.forEach((timer) => clearTimeout(timer))
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!event.altKey || event.ctrlKey || event.metaKey || event.code !== 'KeyN') return
+      const newest = region.current?.querySelector<HTMLElement>('[data-toast-id]:last-of-type')
+      const target = newest?.querySelector<HTMLElement>('[data-toast-action]') ?? newest?.querySelector<HTMLElement>('button')
+      if (!target) return
+      event.preventDefault()
+      target.focus()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
   const api = useMemo<ToastApi>(() => ({ show, dismiss }), [show, dismiss])
@@ -62,36 +82,70 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {announcement.assertive}
       </div>
       <section
+        ref={region}
         aria-label="Notifications"
+        onFocus={(event) => {
+          const from = event.relatedTarget
+          if (from instanceof HTMLElement && !event.currentTarget.contains(from)) returnTo.current = from
+        }}
         className="pointer-events-none fixed inset-x-4 bottom-4 z-50 flex flex-col gap-2 md:right-6 md:bottom-6 md:left-auto md:w-[22rem]"
       >
         {toasts.map((toast) => (
-          <div
-            key={toast.id}
-            className={cx(
-              'pointer-events-auto flex items-start gap-3 rounded-lg border border-l-4 border-line bg-surface py-2.5 pr-2 pl-3 shadow-pop',
-              stripes[toast.tone ?? 'neutral'],
-            )}
-          >
-            <div className="min-w-0 flex-1 py-0.5">
-              <p className="text-sm font-medium text-fg">{toast.title}</p>
-              {toast.description ? <p className="mt-0.5 text-[0.8125rem] text-fg-muted">{toast.description}</p> : null}
-            </div>
-            {toast.action ? (
-              <Button
-                size="sm"
-                onClick={() => {
-                  toast.action?.onAction()
-                  dismiss(toast.id)
-                }}
-              >
-                {toast.action.label}
-              </Button>
-            ) : null}
-            <IconButton label="Dismiss notification" icon={<CloseIcon />} size="sm" onClick={() => dismiss(toast.id)} />
-          </div>
+          <ToastItem key={toast.id} toast={toast} onDismiss={dismiss} />
         ))}
       </section>
     </ToastContext>
+  )
+}
+
+function ToastItem({ toast, onDismiss }: { toast: ToastEntry; onDismiss: (id: number) => void }) {
+  const [hovered, setHovered] = useState(false)
+  const [focused, setFocused] = useState(false)
+  const remaining = useRef(toast.durationMs ?? (toast.action ? 15_000 : 5_000))
+  const paused = hovered || focused
+
+  useEffect(() => {
+    if (paused) return
+    const started = Date.now()
+    const timer = setTimeout(() => onDismiss(toast.id), remaining.current)
+    return () => {
+      clearTimeout(timer)
+      remaining.current = Math.max(1_000, remaining.current - (Date.now() - started))
+    }
+  }, [paused, onDismiss, toast.id])
+
+  return (
+    <div
+      data-toast-id={toast.id}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocus={() => setFocused(true)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false)
+      }}
+      className={cx(
+        'pointer-events-auto flex items-start gap-3 rounded-lg border border-l-4 border-line bg-surface py-2.5 pr-2 pl-3 shadow-pop',
+        stripes[toast.tone ?? 'neutral'],
+      )}
+    >
+      <div className="min-w-0 flex-1 py-0.5">
+        <p className="text-sm font-medium text-fg">{toast.title}</p>
+        {toast.description ? <p className="mt-0.5 text-[0.8125rem] break-words text-fg-muted">{toast.description}</p> : null}
+      </div>
+      {toast.action ? (
+        <Button
+          size="sm"
+          data-toast-action
+          aria-keyshortcuts="Alt+N"
+          onClick={() => {
+            toast.action?.onAction()
+            onDismiss(toast.id)
+          }}
+        >
+          {toast.action.label}
+        </Button>
+      ) : null}
+      <IconButton label="Dismiss notification" icon={<CloseIcon />} size="sm" onClick={() => onDismiss(toast.id)} />
+    </div>
   )
 }

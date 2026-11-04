@@ -72,6 +72,15 @@ describe('claims check', () => {
     expect(rules(result.issues)).not.toContain('unverified_number')
   })
 
+  it('ignores experience and projects marked unverified', () => {
+    const unverified = samProfile()
+    unverified.experience = unverified.experience.map((job) => ({ ...job, verified: false }))
+    unverified.projects = unverified.projects.map((project) => ({ ...project, verified: false }))
+    const result = lintCoverLetter(GOOD, unverified, { company: 'Northwind Apps' })
+    expect(result.issues).toContainEqual(expect.objectContaining({ rule: 'unverified_name', excerpt: 'Pinecrest Studio' }))
+    expect(result.issues).toContainEqual(expect.objectContaining({ rule: 'unverified_number', excerpt: '4' }))
+  })
+
   it('flags an employer or project that is not on the profile', () => {
     const result = lint(GOOD.replace('At Pinecrest Studio I built', 'At Initech I built'))
     expect(result.issues).toContainEqual(expect.objectContaining({ rule: 'unverified_name', excerpt: 'Initech', severity: 'error' }))

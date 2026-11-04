@@ -5,7 +5,7 @@
  * "applied", a repeated posting, an unknown status and a broken line. The public demo previews
  * it, and the importer's tests use it. Everything here is invented.
  */
-import type { JobHunterSource } from '../../../scripts/lib/jobhunter-map.ts'
+import type { JobHunterSource } from '../../jobhunter/map.ts'
 
 const SEARCH_PAGE = 'https://www.linkedin.example.com/jobs/search?keywords=junior%20developer&location=Hamilton'
 

@@ -1,5 +1,6 @@
 import { useId, useState, type ReactNode } from 'react'
-import { planHasChanges, type Finding, type ImportPlan } from '../../../scripts/lib/jobhunter-map.ts'
+import { planHasChanges, type Finding, type ImportPlan } from '../../jobhunter/map.ts'
+import type { YamlProfileNotes } from '../../jobhunter/plan.ts'
 import { APP_STATUS_DISPLAY, QUEUE_STATUS_DISPLAY } from '@/ui/status.ts'
 import { Badge } from '@/ui/Badge.tsx'
 import { Button } from '@/ui/Button.tsx'
@@ -11,6 +12,8 @@ import type { ApplyChoices } from './applyImport.ts'
 export interface ImportReportProps {
   folder: string
   plan: ImportPlan
+  /** Set when the profile came from job-hunter's old config/profile.yaml. */
+  yaml?: YamlProfileNotes | null
   /** Why Apply is unavailable, e.g. in the demo. Null when it can run. */
   applyBlocked: string | null
   applying: boolean
@@ -25,7 +28,7 @@ function statusLabel(domain: 'queue' | 'application', status: string): string {
   return domain === 'queue' ? QUEUE_STATUS_DISPLAY[status as QueueStatus].label : APP_STATUS_DISPLAY[status as AppStatus].label
 }
 
-export function ImportReport({ folder, plan, applyBlocked, applying, onApply }: ImportReportProps) {
+export function ImportReport({ folder, plan, yaml = null, applyBlocked, applying, onApply }: ImportReportProps) {
   const profileId = useId()
   const [writeProfile, setWriteProfile] = useState(plan.profile?.action === 'add')
   const profileChanges = writeProfile && plan.profile !== null && plan.profile.action !== 'same'
@@ -93,6 +96,7 @@ export function ImportReport({ folder, plan, applyBlocked, applying, onApply }: 
       <Findings title="Duplicates" description="Repeated postings are imported once." findings={plan.duplicates} />
       <Findings title="Set aside" description="Rows in the application log that are not applications." findings={plan.setAside} />
       <Findings title="Check these" description="Lines that were skipped or need a look after the import." findings={plan.problems} tone="warn" />
+      {yaml && plan.profile ? <YamlWarning notes={yaml} /> : null}
 
       <Card>
         <CardHeader title="What will be written" description="New rows are added; nothing already in Shortlist is changed, except decks, exercises and stories with newer copies." />
@@ -186,6 +190,49 @@ function Findings({ title, description, findings, tone = 'neutral' }: { title: s
           </li>
         ))}
       </ul>
+    </Card>
+  )
+}
+
+const YAML_KINDS = [
+  ['experience', 'Jobs, imported as unverified'],
+  ['bullet', 'Resume bullets: job bullets imported as unverified, project bullets left out'],
+  ['answer', 'Saved answers, imported as "answer it yourself"'],
+] as const
+
+function YamlWarning({ notes }: { notes: YamlProfileNotes }) {
+  return (
+    <Card>
+      <CardHeader
+        title={
+          <span className="inline-flex items-center gap-2">
+            Profile from config/profile.yaml
+            <Badge tone="warn">Check it</Badge>
+          </span>
+        }
+        description="There is no copilot-data/profile.json, so the profile comes from the old profile.yaml. Old copies of that file held claims that were not true, so nothing in it is trusted yet. Check each item, then fix it on the Profile page."
+      />
+      <CardBody className="space-y-3 text-[0.8125rem]">
+        {YAML_KINDS.map(([kind, heading]) => {
+          const items = notes.unverified.filter((item) => item.kind === kind)
+          if (items.length === 0) return null
+          return (
+            <div key={kind}>
+              <h3 className="font-medium text-fg">
+                {heading} ({items.length})
+              </h3>
+              <ul className="mt-1 list-disc space-y-0.5 pl-5 text-fg-muted">
+                {items.map((item, index) => (
+                  <li key={index} className="break-words">
+                    {item.text}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )
+        })}
+        {notes.gaps.length > 0 ? <p className="text-fg-muted">Could not read: {notes.gaps.join('; ')}.</p> : null}
+      </CardBody>
     </Card>
   )
 }

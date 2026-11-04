@@ -25,6 +25,7 @@ import {
   type SessionScope,
 } from './session.ts'
 import { useProgressWriter } from './usePractice.ts'
+import { shortcutsEnabled, useShortcutsEnabled } from '@/app/shortcutsSetting.ts'
 
 type Stage = 'prompt' | 'explain' | 'revealed'
 
@@ -98,7 +99,7 @@ export function ReviewSession({ title, decks, progress: initialProgress, scope, 
 
   const onKeyDown = useEffectEvent((event: KeyboardEvent) => {
     if (stage !== 'revealed' || event.repeat || event.metaKey || event.ctrlKey || event.altKey) return
-    if (isTyping(event.target) || document.querySelector('dialog[open]')) return
+    if (isTyping(event.target) || document.querySelector('dialog[open]') || !shortcutsEnabled()) return
     const choice = GRADES.find((entry) => entry.key === event.key)
     if (!choice) return
     event.preventDefault()
@@ -337,6 +338,7 @@ function KeyPoints({ points, ticked, onChange }: { points: string[]; ticked: Rea
 }
 
 function GradeButtons({ box, suggestion, onGrade }: { box: Box | undefined; suggestion: Grade | null; onGrade: (grade: Grade) => void }) {
+  const [shortcuts] = useShortcutsEnabled()
   return (
     <div className="mt-5">
       <p id="grade-label" className="mb-2 text-[0.8125rem] font-medium text-fg">
@@ -352,7 +354,7 @@ function GradeButtons({ box, suggestion, onGrade }: { box: Box | undefined; sugg
             type="button"
             onClick={() => onGrade(entry.grade)}
             aria-label={`${entry.label}, back ${intervalLabel(box, entry.grade)}`}
-            aria-keyshortcuts={entry.key}
+            aria-keyshortcuts={shortcuts ? entry.key : undefined}
             className={cx(
               'flex min-h-14 flex-col items-start justify-center gap-0.5 rounded-md border px-3 py-2 text-left transition-colors',
               entry.grade === suggestion ? 'border-fg bg-accent-soft hover:bg-accent-soft/70' : 'border-line-strong bg-surface hover:bg-surface-2',
@@ -360,7 +362,7 @@ function GradeButtons({ box, suggestion, onGrade }: { box: Box | undefined; sugg
           >
             <span className="flex w-full items-center justify-between gap-2 text-sm font-medium text-fg">
               {entry.label}
-              <Kbd>{entry.key}</Kbd>
+              {shortcuts ? <Kbd>{entry.key}</Kbd> : null}
             </span>
             <span className="text-xs text-fg-muted">Back {intervalLabel(box, entry.grade)}</span>
           </button>

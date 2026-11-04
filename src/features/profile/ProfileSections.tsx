@@ -315,7 +315,7 @@ function AnswerFields({
       </Field>
       {answer.id ? (
         <p className="text-xs text-fg-subtle">
-          Id <span className="font-mono break-all">{answer.id}</span>
+          Id <span className="font-mono break-words">{answer.id}</span>
         </p>
       ) : null}
     </div>

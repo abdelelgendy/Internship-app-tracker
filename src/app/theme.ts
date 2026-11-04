@@ -40,9 +40,13 @@ export function getThemeState(): ThemeState {
   return state
 }
 
+// The --bg of each theme in src/index.css, for the phone's browser bar. index.html sets it before first paint.
+const THEME_COLORS: Record<Theme, string> = { light: '#f4f4f0', dark: '#1a1b18' }
+
 function refresh() {
   const next = compute()
   document.documentElement.dataset.theme = next.theme
+  document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', THEME_COLORS[next.theme])
   if (state && next.preference === state.preference && next.theme === state.theme) return
   state = next
   listeners.forEach((listener) => listener())

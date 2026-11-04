@@ -125,7 +125,8 @@ export interface Profile {
   authorization: { canada: 'citizen' | 'pr' | 'permit' | 'none'; usRequiresSponsorship: boolean | null; notes?: string }
   education: { school: string; degree: string; field: string; start?: string; end?: string; status: 'completed' | 'in_progress'; notes?: string }[]
   experience: { org: string; title: string; start: string; end: string | null; location?: string; summary?: string; bullets: string[]; verified: boolean }[]
-  projects: { slug: string; name: string; oneLiner: string; bullets: string[]; stack: string[]; url?: string }[]
+  // verified: false keeps a project out of what a cover letter may claim, as it does for experience.
+  projects: { slug: string; name: string; oneLiner: string; bullets: string[]; stack: string[]; url?: string; verified?: boolean }[]
   skills: { name: string; level: SkillLevel; evidence?: string }[]   // evidence: a project slug or file
   targeting: {
     titles: string[]; avoidTitles: string[]; locations: string[]; maxYears: number;

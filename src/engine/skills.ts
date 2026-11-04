@@ -122,11 +122,20 @@ export function canonicalSkill(raw: string): string | null {
   return BY_ALIAS.get(normalizeText(raw).toLowerCase()) ?? null
 }
 
+/** True when a match starts right after "word.", as "js" does in "Node.js": the end of another tool's name. */
+function isDottedSuffix(clean: string, index: number): boolean {
+  return index >= 2 && clean[index - 1] === '.' && /[\p{L}\p{N}]/u.test(clean[index - 2])
+}
+
 function firstIndex(clean: string, skill: SkillDef, ignoreCase: boolean): number {
   let first = -1
   for (const alias of skill.aliases) {
-    const index = clean.search(aliasRegex(alias, ignoreCase))
-    if (index !== -1 && (first === -1 || index < first)) first = index
+    const regex = aliasRegex(alias, ignoreCase)
+    for (const match of clean.matchAll(new RegExp(regex.source, regex.flags.includes('g') ? regex.flags : `${regex.flags}g`))) {
+      if (isDottedSuffix(clean, match.index)) continue
+      if (first === -1 || match.index < first) first = match.index
+      break
+    }
   }
   return first
 }

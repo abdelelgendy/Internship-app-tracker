@@ -1,4 +1,4 @@
-import { LOCAL_API_HEADER } from './localApi.ts'
+import { localRequestRefusal } from './localApi.ts'
 
 /**
  * "Draft with Claude" for the apply kit's cover letter. It exists only in the dev server
@@ -13,8 +13,7 @@ import { LOCAL_API_HEADER } from './localApi.ts'
  * is ignored, and email addresses and phone numbers are removed from what is sent. The answer
  * is always a draft for a person to edit; nothing is saved or sent on.
  *
- * Register it in vite.config.ts before the local data plugin, so it answers /__local/ai first:
- *   aiDraftPlugin({ apiKey: loadEnv(mode, repoRoot, 'ANTHROPIC_').ANTHROPIC_API_KEY }),
+ * vite.config.ts registers it before the local data plugin, so it answers /__local/ai first.
  */
 
 export const AI_BASE = '/__local/ai'
@@ -214,26 +213,6 @@ interface LocalResponse {
   end(body?: string): unknown
 }
 
-const LOOPBACK_ADDRESSES = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
-const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]'])
-
-/** The same rules as the local data API: this computer, a localhost host name, the app's own origin, and the custom header. */
-function refusal(req: LocalRequest): string | null {
-  if (!LOOPBACK_ADDRESSES.has(req.socket.remoteAddress ?? '')) return 'The draft API only answers this computer.'
-  const host = String(req.headers.host ?? '')
-  if (!LOOPBACK_HOSTS.has(host.replace(/:\d+$/, ''))) return 'The draft API only answers localhost.'
-  const origin = req.headers.origin
-  if (typeof origin === 'string' && origin !== 'null') {
-    try {
-      if (new URL(origin).host !== host) return 'Cross-origin requests are refused.'
-    } catch {
-      return 'Cross-origin requests are refused.'
-    }
-  }
-  if (req.headers[LOCAL_API_HEADER] !== '1') return `Requests need the ${LOCAL_API_HEADER} header.`
-  return null
-}
-
 function send(res: LocalResponse, status: number, body: unknown) {
   res.statusCode = status
   res.setHeader('content-type', 'application/json; charset=utf-8')
@@ -261,7 +240,7 @@ export function createAiHandler({ writer }: { writer: DraftWriter | null }) {
   let drafting = false
   return async (req: LocalRequest, res: LocalResponse) => {
     try {
-      const refused = refusal(req)
+      const refused = localRequestRefusal(req, 'The draft API')
       if (refused) throw new DraftError(403, refused)
       const route = (req.url ?? '/').split('?')[0].replace(/^\/+|\/+$/g, '')
       if (route === 'status' && req.method === 'GET') {
@@ -271,9 +250,10 @@ export function createAiHandler({ writer }: { writer: DraftWriter | null }) {
       if (route === 'draft-cover' && req.method === 'POST') {
         if (!writer) throw new DraftError(404, 'Drafting is off. Set ANTHROPIC_API_KEY and restart the dev server to turn it on.')
         if (drafting) throw new DraftError(429, 'A draft is already being written.')
-        const request = parseDraftRequest(await readJson(req))
+        // Taken before the body is read: two requests whose bodies are still arriving must not both pass.
         drafting = true
         try {
+          const request = parseDraftRequest(await readJson(req))
           return send(res, 200, { draft: await writer(request) })
         } finally {
           drafting = false

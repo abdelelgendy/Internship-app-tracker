@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { DataContext, type DataContextValue } from './data-context.ts'
 import type { DataSource } from './mode.ts'
-import { isWriteMethod, wrapRepo } from './repo.ts'
+import { isWriteMethod, StaleDataError, wrapRepo } from './repo.ts'
 
 /** Gives pages the repo, the data mode, and a version that changes after every save. */
 export function DataProvider({ source, children }: { source: DataSource; children: ReactNode }) {
@@ -10,9 +10,15 @@ export function DataProvider({ source, children }: { source: DataSource; childre
   const repo = useMemo(
     () =>
       wrapRepo(source.repo, async (name, call) => {
-        const result = await call()
-        if (isWriteMethod(name)) setVersion((current) => current + 1)
-        return result
+        try {
+          const result = await call()
+          if (isWriteMethod(name)) setVersion((current) => current + 1)
+          return result
+        } catch (error) {
+          // The save was refused because the data changed elsewhere: load the current copy.
+          if (error instanceof StaleDataError) setVersion((current) => current + 1)
+          throw error
+        }
       }),
     [source.repo],
   )

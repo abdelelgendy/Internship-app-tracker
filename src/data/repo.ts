@@ -43,6 +43,11 @@ export class ReadOnlyRepoError extends Error {
   name = 'ReadOnlyRepoError'
 }
 
+/** Thrown when a save was built on data that changed since it was loaded; the views reload. */
+export class StaleDataError extends Error {
+  name = 'StaleDataError'
+}
+
 export function isWriteMethod(name: keyof Repo): boolean {
   return name.startsWith('save')
 }

@@ -19,8 +19,8 @@ export const APP_STATUS_DISPLAY: Record<AppStatus, { label: string; tone: BadgeT
 
 export const QUEUE_STATUS_DISPLAY: Record<QueueStatus, { label: string; tone: BadgeTone }> = {
   queued: { label: 'Queued', tone: 'neutral' },
-  shortlisted: { label: 'Shortlisted', tone: 'accent' },
-  skipped_age: { label: 'Too old', tone: 'muted' },
+  shortlisted: { label: 'Shortlisted', tone: 'info' },
+  skipped_age: { label: 'Missed the gate', tone: 'muted' },
   skipped_dealbreaker: { label: 'Dealbreaker', tone: 'muted' },
   skipped_duplicate: { label: 'Duplicate', tone: 'muted' },
   skipped_ghost: { label: 'Likely ghost job', tone: 'muted' },

@@ -11,7 +11,7 @@ export function NotFoundPage() {
       <EmptyState
         title={
           <>
-            Nothing lives at <span className="font-mono break-all">{pathname}</span>
+            Nothing lives at <span className="font-mono break-words">{pathname}</span>
           </>
         }
         description="The link may be old, or the item it pointed to was removed."

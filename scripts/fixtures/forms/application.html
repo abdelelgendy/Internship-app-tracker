@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Job Application for Software Developer at Maple Ledger</title>
+  <style>body { font: 15px/1.5 system-ui, sans-serif; max-width: 720px; margin: 24px auto; } .field, .application-question, fieldset { margin: 12px 0; } label { display: block; }</style>
+</head>
+<body>
+  <!-- A synthetic application form in the style of Greenhouse, Lever and Ashby, for the form
+       assistant's tests. Maple Ledger is fictional. The page records any attempt to submit. -->
+  <h1>Software Developer</h1>
+  <form id="application-form" action="/mapleledger-sample/jobs/5100001/submit" method="post">
+    <div class="field"><label for="first_name">First Name *</label><input id="first_name" name="job_application[first_name]" type="text" required></div>
+    <div class="field"><label for="last_name">Last Name *</label><input id="last_name" name="job_application[last_name]" type="text" required></div>
+    <div class="field"><span id="preferred-label">Preferred name</span><input aria-labelledby="preferred-label" name="preferred"></div>
+    <div class="field"><label for="email">Email *</label><input id="email" name="job_application[email]" type="email" required></div>
+    <div class="field"><label for="phone">Phone</label><input id="phone" name="job_application[phone]" type="tel"></div>
+    <div class="field"><label for="resume">Resume/CV *</label><input id="resume" name="resume" type="file" required></div>
+    <div class="field"><label for="linkedin">LinkedIn Profile</label><input id="linkedin" name="urls[LinkedIn]" type="text"></div>
+    <div class="field"><label>GitHub<input name="urls[GitHub]" type="url"></label></div>
+    <div class="field"><label for="website">Website</label><input id="website" name="urls[Portfolio]" value="https://old-site.example.com"></div>
+    <div class="application-question">
+      <label for="q-auth">Are you legally authorized to work in Canada? *</label>
+      <select id="q-auth" name="q_auth" required><option value="">Please select</option><option value="1">Yes</option><option value="0">No</option></select>
+    </div>
+    <fieldset>
+      <legend>Will you now or in the future require sponsorship to work in Canada?</legend>
+      <label><input type="radio" name="q_sponsor" value="yes"> Yes</label>
+      <label><input type="radio" name="q_sponsor" value="no"> No</label>
+    </fieldset>
+    <div class="application-question"><label for="q-us">Will you require sponsorship to work in the United States?</label><input id="q-us" name="q_us"></div>
+    <div class="application-question"><label for="q-react">Do you have experience with React?</label><select id="q-react" name="q_react"><option></option><option>Yes</option><option>No</option></select></div>
+    <div class="application-question"><label for="q-python">Do you have experience with Python?</label><select id="q-python" name="q_python"><option></option><option>Yes</option><option>No</option></select></div>
+    <div class="application-question"><label for="q-start">When can you start?</label><input id="q-start" name="q_start" onkeydown="if (event.key === 'Enter') this.form.requestSubmit()"></div>
+    <div class="application-question"><label for="q-salary">What are your salary expectations?</label><input id="q-salary" name="q_salary"></div>
+    <div class="application-question"><label for="q-heard">How did you hear about this role?</label><select id="q-heard" name="q_heard"><option></option><option>LinkedIn</option><option>Company website</option><option>Referral</option></select></div>
+    <div class="application-question">
+      <div class="question-label">Have you previously applied to Maple Ledger?</div>
+      <label><input type="radio" name="q_before" value="Yes"> Yes</label>
+      <label><input type="radio" name="q_before" value="No"> No</label>
+    </div>
+    <div class="application-question"><label for="q-why">Why do you want to work at Maple Ledger?</label><textarea id="q-why" name="q_why"></textarea></div>
+    <div class="application-question"><label for="q-gender">Gender</label><select id="q-gender" name="q_gender"><option></option><option>Decline to self-identify</option><option>Woman</option><option>Man</option></select></div>
+    <div class="application-question"><label><input type="checkbox" name="consent"> I agree to the privacy policy</label></div>
+    <div class="application-question"><label for="q-date">Available from</label><input id="q-date" name="q_date" type="date"></div>
+    <input type="hidden" name="token" value="synthetic">
+    <div class="field" style="display:none"><label for="honeypot">Leave this empty</label><input id="honeypot" name="honeypot"></div>
+    <button type="submit" id="submit-button">Submit Application</button>
+    <input type="submit" id="submit-input" value="Submit">
+    <button id="default-button">A button with no type submits too</button>
+    <div role="button" id="role-button" tabindex="0">Fake button</div>
+  </form>
+  <script>
+    window.__submitAttempts = 0
+    document.getElementById('application-form').addEventListener('submit', (event) => {
+      window.__submitAttempts += 1
+      event.preventDefault()
+    })
+    for (const id of ['submit-button', 'submit-input', 'default-button', 'role-button']) {
+      document.getElementById(id).addEventListener('click', () => { window.__submitAttempts += 1 })
+    }
+  </script>
+</body>
+</html>

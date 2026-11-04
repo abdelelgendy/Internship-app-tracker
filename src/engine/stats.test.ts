@@ -90,8 +90,9 @@ describe('outcomes', () => {
 
   it('summarizes submitted applications only', () => {
     const apps = [
-      makeApplication({ status: 'draft', history: [] }),
-      makeApplication({ status: 'prepared', history: [] }),
+      makeApplication({ status: 'draft', history: [], appliedAt: undefined }),
+      makeApplication({ status: 'prepared', history: [], appliedAt: undefined }),
+      makeApplication({ status: 'withdrawn', history: [{ status: 'withdrawn', at: '2026-10-02T12:00:00Z', by: 'me' }], appliedAt: undefined }),
       ...Array.from({ length: 8 }, () => appWith('applied')),
       appWith('interview_scheduled'),
       appWith('rejected'),

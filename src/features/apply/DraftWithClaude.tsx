@@ -3,7 +3,7 @@ import type { Job, Profile } from '../../engine/types.ts'
 import { Button } from '../../ui/Button.tsx'
 import { Dialog } from '../../ui/Dialog.tsx'
 import { useToast } from '../../ui/toast-context.ts'
-import { SparkIcon } from '../jobs/icons.tsx'
+import { SparkIcon } from '../../ui/icons.tsx'
 import { draftRequest, requestCoverDraft } from './aiDraft.ts'
 
 /**
@@ -67,7 +67,7 @@ export function DraftWithClaude({
               Cancel
             </Button>
             <Button variant="primary" onClick={() => void send()} disabled={busy || postingWords < 8}>
-              {busy ? 'Drafting...' : 'Send and draft'}
+              {busy ? 'Drafting…' : 'Send and draft'}
             </Button>
           </>
         }

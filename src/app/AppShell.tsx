@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Outlet, ScrollRestoration, useLocation, useNavigate, useNavigation } from 'react-router'
 import { Button } from '../ui/Button.tsx'
+import { cx } from '../ui/cx.ts'
 import { Dialog } from '../ui/Dialog.tsx'
 import { IconButton } from '../ui/IconButton.tsx'
 import { KeyboardIcon, MenuIcon } from '../ui/icons.tsx'
@@ -13,16 +14,52 @@ import { ShortcutsDialog } from './ShortcutsDialog.tsx'
 import { ThemeToggle } from './ThemeToggle.tsx'
 import { useKeyboardShortcuts } from './useKeyboardShortcuts.ts'
 
-/** After a navigation, move focus to the new page's heading so screen readers announce it. */
+// How long to wait for a page that is still loading to render its heading.
+const HEADING_WAIT_MS = 3000
+
+/**
+ * After a navigation, move focus to the new page's heading so screen readers announce it. A page
+ * that is still loading shows a skeleton without one, so this waits for the h1 to mount, and
+ * falls back to <main> only if none appears. It never takes focus back from something the person
+ * has already moved to inside the page.
+ */
 function useFocusOnNavigation(pathname: string) {
   const lastPathname = useRef(pathname)
   useEffect(() => {
     if (lastPathname.current === pathname) return
     lastPathname.current = pathname
-    const target = document.querySelector<HTMLElement>('main h1') ?? document.getElementById('main')
-    target?.focus({ preventScroll: true })
+    const main = document.getElementById('main')
+    if (!main) return
+    const focus = (target: HTMLElement) => {
+      const current = document.activeElement
+      if (current === main || !main.contains(current)) target.focus({ preventScroll: true })
+    }
+    const heading = () => main.querySelector<HTMLElement>('h1')
+    const ready = heading()
+    if (ready) {
+      focus(ready)
+      return
+    }
+    const observer = new MutationObserver(() => {
+      const found = heading()
+      if (!found) return
+      stop()
+      focus(found)
+    })
+    const timer = setTimeout(() => {
+      stop()
+      focus(heading() ?? main)
+    }, HEADING_WAIT_MS)
+    function stop() {
+      observer.disconnect()
+      clearTimeout(timer)
+    }
+    observer.observe(main, { childList: true, subtree: true })
+    return stop
   }, [pathname])
 }
+
+const WIDE_PAGES = new Set(['/board'])
 
 /**
  * Layout for every page: a left sidebar from md (768px) up, a compact top bar with a menu
@@ -74,7 +111,12 @@ export function AppShell({ dataMode }: { dataMode: DataMode }) {
           </div>
         </header>
         <ModeBanner mode={dataMode} />
-        <main id="main" tabIndex={-1} className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 outline-none md:px-8 md:py-8">
+        {/* The board's eleven columns use the full width; every other page keeps a readable measure. */}
+        <main
+          id="main"
+          tabIndex={-1}
+          className={cx('mx-auto w-full flex-1 px-4 py-6 outline-none md:px-8 md:py-8', !WIDE_PAGES.has(pathname) && 'max-w-6xl')}
+        >
           <Outlet />
         </main>
       </div>

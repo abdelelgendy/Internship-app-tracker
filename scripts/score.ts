@@ -1,6 +1,7 @@
 /** Scores every job in the data folder again with the current rubric, and optionally resets rule-made statuses. */
 import { plural, parseFlags, runMain, UsageError } from './lib/cli.ts'
-import { loadData, prepareDataDir, resolveDataDir, saveRows } from './lib/data-dir.ts'
+import type { Job } from '../src/engine/types.ts'
+import { loadData, prepareDataDir, resolveDataDir, updateRows } from './lib/data-dir.ts'
 import { rescoreJobs } from './lib/rescore.ts'
 
 const USAGE = `Usage: npm run score -- [--set-status] [--dry-run] [--data <folder>]
@@ -26,8 +27,17 @@ runMain(USAGE, async () => {
   }
 
   const setStatus = values['set-status'] === true
-  const result = rescoreJobs(data.jobs, data.applications, data.profile, new Date(), { setStatus })
-  if (!dryRun) await saveRows(dir, 'jobs.jsonl', result.jobs)
+  const profile = data.profile
+  const rescore = (jobs: readonly Job[]) => rescoreJobs(jobs, data.applications, profile, new Date(), { setStatus })
+  let result = rescore(data.jobs)
+  // Scored again from the rows as they are at write time, so an edit made in the app meanwhile
+  // is kept: only the score and, with --set-status, the status change.
+  if (!dryRun) {
+    await updateRows<Job>(dir, 'jobs.jsonl', (current) => {
+      result = rescore(current)
+      return result.jobs
+    })
+  }
 
   const { apply, hold, skip } = result.verdicts
   console.log(`${dryRun ? 'Would score' : 'Scored'} ${plural(result.jobs.length, 'job')}: ${apply} to apply to now, ${hold} on hold, ${skip} skipped.`)

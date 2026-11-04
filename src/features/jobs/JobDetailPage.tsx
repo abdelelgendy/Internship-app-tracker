@@ -18,9 +18,9 @@ import { buttonClass } from '../../ui/styles.ts'
 import { useToast } from '../../ui/toast-context.ts'
 import { useStartApplication } from '../apply/useStartApplication.ts'
 import { formatAge, formatDay, formatDayTime, fromLocalInputValue, sourceLabel, WORKPLACE_LABEL } from './format.ts'
-import { ExternalIcon } from './icons.tsx'
+import { ExternalIcon } from '../../ui/icons.tsx'
 import { duplicateOf, ghostFor, markSkills, scoreFor, skillMentions, tierLabel, tierMeaning, type SkillMention } from './jobView.ts'
-import { LoadProblem } from './LoadProblem.tsx'
+import { LoadProblem } from '../../ui/LoadProblem.tsx'
 import { ScoreBreakdown, ScoreMark, VerdictBadge } from './ScoreParts.tsx'
 import { useNow } from './useNow.ts'
 
@@ -51,7 +51,7 @@ export function JobDetailPage() {
           title="No job with this id"
           description={
             <>
-              Nothing in your jobs has the id <span className="font-mono break-all text-fg">{id}</span>. It may have been removed or
+              Nothing in your jobs has the id <span className="font-mono break-words text-fg">{id}</span>. It may have been removed or
               imported under a new id.
             </>
           }
@@ -289,14 +289,18 @@ function StatusCard({ job, applications }: { job: Job; applications: Application
     <Card>
       <CardHeader title="Status" />
       <CardBody className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <QueueStatusBadge status={job.status} />
-          {available.map((action) => (
-            <Button key={action.to} size="sm" variant="ghost" onClick={() => void move(action.to, action.done)}>
-              {action.label}
-            </Button>
-          ))}
-        </div>
+        <p className="flex flex-wrap items-center gap-2 text-[0.8125rem] text-fg-muted">
+          Status: <QueueStatusBadge status={job.status} />
+        </p>
+        {available.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {available.map((action) => (
+              <Button key={action.to} size="sm" onClick={() => void move(action.to, action.done)}>
+                {action.label}
+              </Button>
+            ))}
+          </div>
+        ) : null}
         {applications.length > 0 ? (
           <ul className="space-y-1.5 border-t border-line pt-3">
             {applications.map((app) => (

@@ -52,11 +52,11 @@ const STRONG_CUES = [
   'building', 'created', 'made', 'shipped', 'launched', 'developed', 'wrote', 'called', 'named',
 ]
 const WEAK_CUES = ['for']
-// A capitalized word; a dot counts only inside a word ("Next.js"), so "Apex." ends the name.
+// A capitalized word; a dot counts only inside a word ("Next.js"), so "Northwind." ends the name.
 const NAME_TOKEN = String.raw`[A-Z0-9](?:[\p{L}\p{N}&+#'-]|\.(?=[\p{L}\p{N}]))*`
 
 function cueRegex(cues: readonly string[]): RegExp {
-  // Match the cue in either case at a sentence start ("At Apex"), but require the name to be capitalized.
+  // Match the cue in either case at a sentence start ("At Northwind"), but require the name to be capitalized.
   const alternatives = cues.map((cue) => `[${cue[0].toUpperCase()}${cue[0]}]${cue.slice(1)}`).join('|')
   return new RegExp(String.raw`(?<![\p{L}])(?:${alternatives})\s+(${NAME_TOKEN}(?:\s+(?:${NAME_TOKEN}|of|and|&)){0,5})`, 'gu')
 }
@@ -69,14 +69,17 @@ function countWords(text: string): number {
   return text.trim() === '' ? 0 : text.trim().split(/\s+/).length
 }
 
-/** Everything a letter may draw on: approved facts, experience, projects, education, skills and identity. */
+/**
+ * Everything a letter may draw on: approved facts, verified experience and projects, education,
+ * skills and identity. An entry marked unverified is left out, so its numbers and names are flagged.
+ */
 function approvedCorpus(profile: Profile, company: string): string {
   return [
     profile.name, profile.preferredName, profile.coverLetter.signature, company,
     profile.location.city, profile.location.region, profile.location.country,
     ...profile.facts.flatMap((fact) => [fact.label, fact.value]),
-    ...profile.experience.flatMap((job) => [job.org, job.title, job.start, job.end ?? '', job.location ?? '', job.summary ?? '', ...job.bullets]),
-    ...profile.projects.flatMap((project) => [project.name, project.slug, project.oneLiner, ...project.bullets, ...project.stack]),
+    ...profile.experience.filter((job) => job.verified).flatMap((job) => [job.org, job.title, job.start, job.end ?? '', job.location ?? '', job.summary ?? '', ...job.bullets]),
+    ...profile.projects.filter((project) => project.verified !== false).flatMap((project) => [project.name, project.slug, project.oneLiner, ...project.bullets, ...project.stack]),
     ...profile.education.flatMap((entry) => [entry.school, entry.degree, entry.field, entry.end ?? '', entry.notes ?? '']),
     ...profile.skills.map((skill) => skill.name),
   ].join('\n')
@@ -112,7 +115,7 @@ function claimIssues(text: string, profile: Profile, company: string): LintIssue
 
   for (const [pattern, severity] of NAME_CUES) {
     for (const match of normalizeText(text).matchAll(pattern)) {
-      // "Apex Ecommerce and Outlier UGC" names two places; check each one.
+      // "Northwind Labs and Pinecrest Studio" names two places; check each one.
       for (const segment of match[1].split(/\s+(?:and|&)\s+/)) {
         const words = segment.split(/\s+/)
         while (words.length > 0 && NOT_NAMES.has(words[0].toLowerCase())) words.shift()

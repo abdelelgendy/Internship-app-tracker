@@ -55,7 +55,13 @@ export function Tabs({ label, items, value, defaultValue, onChange, className }:
 
   return (
     <div className={cx('min-w-0', className)}>
-      <div role="tablist" aria-label={label} onKeyDown={handleKeyDown} className="flex gap-1 overflow-x-auto shadow-[inset_0_-1px_0_var(--line)]">
+      {/* Below sm the tabs wrap onto a second row, so none is hidden off the edge of a phone. */}
+      <div
+        role="tablist"
+        aria-label={label}
+        onKeyDown={handleKeyDown}
+        className="flex flex-wrap gap-x-1 shadow-[inset_0_-1px_0_var(--line)] sm:flex-nowrap sm:overflow-x-auto"
+      >
         {items.map((item) => {
           const isSelected = item.id === selected.id
           return (

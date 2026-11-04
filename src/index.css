@@ -141,6 +141,13 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /* Below md the 3rem top bar is sticky: keep a focused or scrolled-to element out from under it. */
+  @media (width < 48rem) {
+    html {
+      scroll-padding-top: 3.5rem;
+    }
+  }
+
   /* A modal dialog is open: the page behind it should not scroll. */
   html:has(dialog[open]) {
     overflow: hidden;

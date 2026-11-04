@@ -9,6 +9,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { Job } from '../src/engine/types.ts'
 import { LOCAL_API_HEADER } from '../src/data/localApi.ts'
 import { createLocalApiRepo, fetchLocalStatus } from '../src/data/localApiRepo.ts'
+import { StaleDataError } from '../src/data/repo.ts'
+import { saveRows } from './lib/data-dir.ts'
 import { localDataPlugin } from '../vite.config.ts'
 
 interface Running {
@@ -153,6 +155,21 @@ describe('local data API', () => {
     expect(ids.filter((id) => id.startsWith('parallel-'))).toHaveLength(25)
   })
 
+  it('refuses to save over a row that a script changed after the app loaded it', async () => {
+    const repo = createLocalApiRepo({ baseUrl: `${server.origin}/__local` })
+    await repo.saveJob(job('stale-1'))
+    const [loaded] = (await repo.listJobs()).filter((row) => row.id === 'stale-1')
+    // A script (npm run score, npm run prefill) writes the row behind the app's back.
+    await saveRows(dataDir, 'jobs.jsonl', [{ ...loaded, notes: 'written by a script' }])
+    await expect(repo.saveJob({ ...loaded, status: 'shortlisted' })).rejects.toBeInstanceOf(StaleDataError)
+    const [kept] = (await repo.listJobs()).filter((row) => row.id === 'stale-1')
+    expect(kept).toMatchObject({ notes: 'written by a script', status: 'queued' })
+    // Once the app has the current copy, the save goes through, and so does an undo of it.
+    await repo.saveJob({ ...kept, status: 'shortlisted' })
+    await repo.saveJob(kept)
+    expect((await repo.listJobs()).find((row) => row.id === 'stale-1')).toMatchObject({ notes: 'written by a script', status: 'queued' })
+  })
+
   it('refuses requests that do not come from this app on this computer', async () => {
     const { origin } = server
     expect((await raw(origin, 'GET', '/__local/status', { [LOCAL_API_HEADER]: '' })).status).toBe(403)
@@ -182,7 +199,14 @@ describe('local data API', () => {
       expect((await raw(origin, 'GET', url)).status, url).toBe(400)
     }
     expect((await raw(origin, 'GET', '/__local/list/practice')).status).toBe(404)
+    // Object.prototype names are not contract files or folders.
+    for (const name of ['constructor', 'valueOf', 'toString', 'hasOwnProperty', '__proto__']) {
+      expect((await raw(origin, 'PUT', `/__local/files/${name}`, {}, '{"anything":"goes"}')).status, name).toBe(400)
+      expect((await raw(origin, 'GET', `/__local/list/${name}`)).status, name).toBe(404)
+    }
+    expect((await readdir(dataDir)).filter((name) => ['constructor', 'valueOf', 'toString'].includes(name))).toEqual([])
     expect((await raw(origin, 'GET', '/__local/files/profile.json')).status).toBe(404)
+    expect((await raw(origin, 'GET', '/__local/files/profile.json?optional')).status).toBe(204)
   })
 
   it('rejects bodies that are too big or would corrupt a file', async () => {

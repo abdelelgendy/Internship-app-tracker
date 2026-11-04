@@ -120,7 +120,16 @@ describe('"Have you applied here before?"', () => {
   const question = 'Have you previously applied to this company?'
   const applications = [
     makeApplication({ company: 'Northwind Apps Inc.', status: 'rejected' }),
-    makeApplication({ company: 'Globex', status: 'prepared', history: [] }),
+    makeApplication({ company: 'Globex', status: 'prepared', history: [], appliedAt: undefined }),
+    makeApplication({
+      company: 'Initrode',
+      status: 'withdrawn',
+      history: [
+        { status: 'draft', at: '2026-10-01T12:00:00Z', by: 'me' },
+        { status: 'withdrawn', at: '2026-10-02T12:00:00Z', by: 'me' },
+      ],
+      appliedAt: undefined,
+    }),
   ]
 
   it('says yes from the application log', () => {
@@ -133,6 +142,10 @@ describe('"Have you applied here before?"', () => {
 
   it('leaves "no" to a person, since the log may be incomplete', () => {
     expect(explainAnswer(question, profile, { company: 'Globex', applications })).toMatchObject({ kind: 'human' })
+  })
+
+  it('does not count a draft withdrawn before it was sent', () => {
+    expect(explainAnswer(question, profile, { company: 'Initrode', applications })).toMatchObject({ kind: 'human' })
   })
 
   it('falls back to the saved answer without a log', () => {

@@ -1,104 +1,34 @@
 /**
- * The import-jobhunter command without its flags: read a job-hunter folder (never writing to
- * it), plan the import with jobhunter-map.ts, fill in the profile from config/profile.yaml when
- * the corrected copilot-data/profile.json is missing, describe the plan, and write it.
+ * The import-jobhunter command without its flags: plan the import with the shared planner
+ * (src/jobhunter/plan.ts, the same one the Import page previews with), describe the plan, and
+ * write it. Reads the job-hunter folder only; never writes to it.
  */
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
-import { parse } from 'yaml'
-import { idFile } from '../../src/data/layout.ts'
+import type { ExistingData, Finding, ImportPlan, SourceReader } from '../../src/jobhunter/map.ts'
+import { folderReader as readerFor, type ImportResult } from '../../src/jobhunter/plan.ts'
+import { importWrites, writesProfile } from '../../src/jobhunter/writes.ts'
 import type { Profile } from '../../src/engine/types.ts'
 import { plural } from './cli.ts'
-import { saveJson, saveRows, type LoadedData } from './data-dir.ts'
-import { planImport, readJobHunterSource, type ExistingData, type Finding, type ImportPlan, type SourceReader } from './jobhunter-map.ts'
-import { profileFromYaml, type ProfileFromYaml } from './profile-yaml.ts'
+import { isInside, saveJson, saveRows, type LoadedData } from './data-dir.ts'
 
-export const PROFILE_YAML = 'config/profile.yaml'
-const MAX_FILE_BYTES = 10 * 1024 * 1024
+export { buildImport } from '../../src/jobhunter/plan.ts'
 
-function code(error: unknown): string | undefined {
-  return (error as NodeJS.ErrnoException).code
-}
-
-/** Read-only access to one folder. Missing paths read as null; huge files are refused. */
-export function folderReader(root: string): SourceReader & { root: string } {
-  return {
-    root,
-    async list(folder) {
-      try {
-        return await readdir(path.join(root, folder))
-      } catch (error) {
-        if (['ENOENT', 'ENOTDIR'].includes(code(error) ?? '')) return null
-        throw error
-      }
-    },
-    async read(file) {
-      let text: string
-      try {
-        text = await readFile(path.join(root, file), 'utf8')
-      } catch (error) {
-        if (['ENOENT', 'EISDIR', 'ENOTDIR'].includes(code(error) ?? '')) return null
-        throw error
-      }
-      if (text.length > MAX_FILE_BYTES) throw new Error(`${file} is larger than 10 MB, so it was not read.`)
-      return text
-    },
-  }
+/** Read-only access to one folder on disk. */
+export function folderReader(root: string): SourceReader {
+  return readerFor(root, { readFile, readdir, join: path.join })
 }
 
 /** Refuses a data folder inside the source or the source inside the data folder, so nothing is written to job-hunter. */
 export function overlapProblem(source: string, dataDir: string): string | null {
-  const inside = (parent: string, child: string) => {
-    const relative = path.relative(parent, child)
-    return relative === '' || (!relative.startsWith('..') && !path.isAbsolute(relative))
-  }
-  if (inside(source, dataDir)) return `The data folder ${dataDir} is inside ${source}. The import never writes to job-hunter, so pick a data folder outside it.`
-  if (inside(dataDir, source)) return `${source} is inside the data folder ${dataDir}. Point the import at the job-hunter folder itself.`
+  if (isInside(source, dataDir)) return `The data folder ${dataDir} is inside ${source}. The import never writes to job-hunter, so pick a data folder outside it.`
+  if (isInside(dataDir, source)) return `${source} is inside the data folder ${dataDir}. Point the import at the job-hunter folder itself.`
   return null
-}
-
-export interface ImportResult {
-  plan: ImportPlan
-  /** Set when the profile came from profile.yaml. */
-  yaml: ProfileFromYaml | null
-  profileFile: string | null
 }
 
 export function existingFrom(data: LoadedData): ExistingData {
   const { jobs, applications, profile, decks, exercises, stories, companies } = data
   return { jobs, applications, profile, decks, exercises, stories, companies }
-}
-
-/**
- * The plan for one import. Returns null when the folder holds nothing the importer reads.
- * The YAML profile is only a fallback: copilot-data/profile.json is the corrected one.
- */
-export async function buildImport(reader: SourceReader, existing: ExistingData, now: Date): Promise<ImportResult | null> {
-  const source = await readJobHunterSource(reader)
-  const yamlText = await reader.read(PROFILE_YAML)
-  if (source === null && yamlText === null) return null
-  const plan = planImport(source ?? { jobs: [], decks: [], exercises: [], stories: [] }, existing, { now })
-  if (source?.profile || yamlText === null) {
-    return { plan, yaml: null, profileFile: source?.profile?.path ?? null }
-  }
-  let doc: unknown
-  try {
-    doc = parse(yamlText)
-  } catch (error) {
-    plan.problems.push({ file: PROFILE_YAML, message: `Not valid YAML (${error instanceof Error ? error.message.split('\n')[0] : 'parse error'}), so the profile was skipped.` })
-    return { plan, yaml: null, profileFile: null }
-  }
-  const yaml = profileFromYaml(doc)
-  const same = existing.profile !== null && JSON.stringify(existing.profile) === JSON.stringify(yaml.profile)
-  plan.profile = { action: existing.profile === null ? 'add' : same ? 'same' : 'update', profile: yaml.profile }
-  plan.found.push({ file: PROFILE_YAML, items: 1 })
-  return { plan, yaml, profileFile: PROFILE_YAML }
-}
-
-/** Whether the profile gets written: always when Shortlist has none, otherwise only when asked. */
-export function writesProfile(plan: ImportPlan, replaceProfile: boolean): boolean {
-  if (!plan.profile || plan.profile.action === 'same') return false
-  return plan.profile.action === 'add' || replaceProfile
 }
 
 function place(finding: Finding): string {
@@ -183,37 +113,13 @@ export function describeImport(
   return `${out.join('\n')}\n`
 }
 
-/** Writes the plan in the same order as the Import page: jobs before the applications that point at them. */
+/** Writes the plan to disk: the same files, in the same order, as the Import page. */
 export async function writeImport(dir: string, plan: ImportPlan, options: { replaceProfile: boolean }): Promise<string[]> {
   const written: string[] = []
-  if (plan.companies.added > 0) {
-    await saveJson(dir, 'companies.json', plan.companies.merged)
-    written.push(plural(plan.companies.added, 'watchlist company', 'watchlist companies'))
-  }
-  for (const { action, deck } of plan.decks) {
-    if (action === 'same') continue
-    await saveJson(dir, idFile('practice/decks', deck.id), deck)
-    written.push(`the ${deck.title} deck`)
-  }
-  if (plan.exercises.added + plan.exercises.updated > 0) {
-    await saveJson(dir, 'practice/exercises.json', plan.exercises.merged)
-    written.push(plural(plan.exercises.added + plan.exercises.updated, 'exercise'))
-  }
-  if (plan.stories.added + plan.stories.updated > 0) {
-    await saveJson(dir, 'practice/stories.json', plan.stories.merged)
-    written.push(plural(plan.stories.added + plan.stories.updated, 'story', 'stories'))
-  }
-  if (plan.jobs.add.length > 0) {
-    await saveRows(dir, 'jobs.jsonl', plan.jobs.add)
-    written.push(plural(plan.jobs.add.length, 'job'))
-  }
-  if (plan.applications.add.length > 0) {
-    await saveRows(dir, 'applications.jsonl', plan.applications.add)
-    written.push(plural(plan.applications.add.length, 'application'))
-  }
-  if (plan.profile && writesProfile(plan, options.replaceProfile)) {
-    await saveJson(dir, 'profile.json', plan.profile.profile)
-    written.push('the profile')
+  for (const write of importWrites(plan, { writeProfile: writesProfile(plan, options.replaceProfile) })) {
+    if (write.kind === 'rows') await saveRows(dir, write.file, write.rows)
+    else await saveJson(dir, write.file, write.value)
+    written.push(write.label)
   }
   return written
 }

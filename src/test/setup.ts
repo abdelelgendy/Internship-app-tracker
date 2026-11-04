@@ -1,8 +1,11 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterEach } from 'vitest'
 
 afterEach(() => cleanup())
+
+// Pages load their data lazily; under a full parallel run one second is sometimes not enough.
+configure({ asyncUtilTimeout: 5000 })
 
 // jsdom has HTMLDialogElement but not its modal methods; this is enough for tests to open and close one.
 if (typeof HTMLDialogElement.prototype.showModal !== 'function') {

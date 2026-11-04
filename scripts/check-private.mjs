@@ -51,17 +51,33 @@ function run(args, options = {}) {
   return execFileSync('git', args, { maxBuffer: 256 * 1024 * 1024, ...options })
 }
 
-/** COPILOT_DATA_DIR from the environment, else from .env.local or .env (as Vite reads it), else .private. */
+/** Vite's development env files, highest priority first. Keep in step with ENV_FILES in scripts/lib/data-dir.ts. */
+const ENV_FILES = ['.env.development.local', '.env.development', '.env.local', '.env']
+
+/** KEY=value as dotenv reads it: "export " allowed, quotes removed, an inline " # comment" dropped. Same rules as envFileValue. */
+function envFileValue(text, key) {
+  let found
+  for (const line of text.split(/\r?\n/)) {
+    const match = line.match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/)
+    if (!match || match[1] !== key) continue
+    const quoted = match[2].match(/^(['"`])(.*?)\1(?:\s+#.*)?$/)
+    found = quoted ? quoted[2] : match[2].replace(/\s+#.*$/, '')
+  }
+  return found
+}
+
+/**
+ * The data folder the dev server and the scripts use: COPILOT_DATA_DIR from the environment,
+ * else from the env files Vite reads, else .private. `configured` is false only for the default.
+ */
 function dataDirFor(root) {
   let value = process.env.COPILOT_DATA_DIR
-  for (const file of ['.env.local', '.env']) {
+  for (const file of ENV_FILES) {
     if (value) break
     const envFile = path.join(root, file)
-    if (!existsSync(envFile)) continue
-    const line = readFileSync(envFile, 'utf8').split('\n').find((entry) => /^\s*COPILOT_DATA_DIR\s*=/.test(entry))
-    if (line) value = line.split('=').slice(1).join('=').trim().replace(/^(["'])(.*)\1$/, '$2')
+    if (existsSync(envFile)) value = envFileValue(readFileSync(envFile, 'utf8'), 'COPILOT_DATA_DIR')
   }
-  return path.resolve(root, value || '.private')
+  return { dataDir: path.resolve(root, value || '.private'), configured: Boolean(value) }
 }
 
 /** One string per line. Lines starting with # are comments, as job-hunter writes them. */
@@ -134,7 +150,8 @@ function checkFile(file, content, { root, dataDir, denylist }) {
   const findings = []
   const absolute = path.resolve(root, file)
   const relativeToData = path.relative(dataDir, absolute)
-  if (!relativeToData.startsWith('..') && !path.isAbsolute(relativeToData)) {
+  // "..backup.json" is inside the folder; only ".." or "../..." leaves it.
+  if (relativeToData !== '..' && !relativeToData.startsWith(`..${path.sep}`) && !path.isAbsolute(relativeToData)) {
     findings.push({ line: 0, reason: 'file is inside the private data folder', match: '' })
   }
   const name = path.basename(file)
@@ -168,8 +185,14 @@ function main() {
     console.error('check-private: not inside a git repository.')
     return 2
   }
-  const dataDir = dataDirFor(root)
+  const { dataDir, configured } = dataDirFor(root)
   const denylist = readDenylist(dataDir)
+  if (denylist === null && configured) {
+    // A configured folder without a denylist means the setting points somewhere unexpected:
+    // committing without the strongest check is not allowed.
+    console.error(`check-private: COPILOT_DATA_DIR points to ${dataDir}, which has no denylist.txt. Fix the setting or create the file. Nothing was committed.`)
+    return 2
+  }
   if (denylist === null) {
     console.error(`check-private: no denylist at ${path.join(dataDir, 'denylist.txt')}, so only the generic checks ran. See docs/PRIVACY.md.`)
   }

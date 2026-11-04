@@ -1,0 +1,32 @@
+[
+  {
+    "id": "4917c8ed-36ec-450e-a90e-b5ed03c9963f",
+    "text": "Junior Frontend Engineer",
+    "hostedUrl": "https://jobs.lever.co/quillstack-sample/4917c8ed-36ec-450e-a90e-b5ed03c9963f",
+    "categories": { "location": "Hamilton, ON", "commitment": "Full-time", "team": "Docs" },
+    "workplaceType": "hybrid",
+    "createdAt": 1793617200000,
+    "descriptionPlain": "Quillstack makes documentation tooling for developer teams.",
+    "lists": [{ "text": "What you bring", "content": "<li>0-2 years of experience with React and TypeScript</li><li>Care for accessible interfaces</li>" }],
+    "additionalPlain": "Two days a week in our Hamilton office."
+  },
+  {
+    "id": "4917c8ed-36ec-450e-a90e-b5ed03c99640",
+    "text": "Junior Frontend Engineer",
+    "hostedUrl": "https://jobs.lever.co/quillstack-sample/4917c8ed-36ec-450e-a90e-b5ed03c99640",
+    "categories": { "location": "Burlington, ON", "commitment": "Full-time", "team": "Docs" },
+    "workplaceType": "hybrid",
+    "createdAt": 1793613600000,
+    "descriptionPlain": "The same role, based in Burlington.",
+    "lists": [{ "text": "What you bring", "content": "<li>0-2 years of experience with React and TypeScript</li>" }]
+  },
+  {
+    "id": "4917c8ed-36ec-450e-a90e-b5ed03c99641",
+    "text": "Software Developer Co-op",
+    "hostedUrl": "https://jobs.lever.co/quillstack-sample/4917c8ed-36ec-450e-a90e-b5ed03c99641",
+    "categories": { "location": "Hamilton, ON", "commitment": "Co-op" },
+    "workplaceType": "onsite",
+    "createdAt": 1793703600000,
+    "descriptionPlain": "A winter 2027 work term for students in a co-op program. React and Node.js."
+  }
+]

@@ -8,7 +8,8 @@ import type { JobFacts } from './types.ts'
  *   new grad, entry level, junior, or 0-2 years   base 15, bonus +10, tier 1
  *   intern or co-op                               base 15, bonus +8,  tier 1
  *   1-3 or 2-3 years                              base 12, bonus +5,  tier 2
- *   2-4 years (or a wide range starting at 2)     base 8,             tier 2
+ *   2-4 years, or a wide or open range ("1+",     base 8,             tier 2
+ *   "2+") starting at 2 or less
  *   3-5 years (a "stretch" range)                 base 4,  penalty -5, tier 3
  *   any other range starting at 3+ years          base 2,  penalty -5, tier 3
  *   not stated                                    base 2,             tier 2
@@ -38,7 +39,8 @@ export function experienceBand(facts: JobFacts): ExperienceBand {
   const max = facts.yearsMax ?? null
   const stated = min !== null || max !== null
   const lo = min ?? 0
-  const hi = max ?? lo
+  // "2+ years" takes anyone with 2 or more, so it is an open range, not exactly 2.
+  const hi = max ?? (min === null ? 0 : Infinity)
   const stretch = min === STRETCH_START_YEARS && max !== null && max > STRETCH_START_YEARS
   const penalty = min !== null && min >= STRETCH_START_YEARS ? -5 : 0
   const years = stated ? yearsText(lo, max) : ''

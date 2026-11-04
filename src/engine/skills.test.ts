@@ -24,6 +24,11 @@ describe('findSkills', () => {
     expect(findSkills('Help the rest of the team react quickly to the next steps in a node graph.')).toEqual([])
   })
 
+  it('does not read the ".js" in Node.js or Next.js as JavaScript', () => {
+    expect(findSkills('experience with node.js and next.js?', true)).toEqual(['Node.js', 'Next.js'])
+    expect(findSkills('Do you know JS? We use Node.js.', true)).toEqual(['JavaScript', 'Node.js'])
+  })
+
   it('keeps C apart from C++, C#, Series C and the C-suite', () => {
     expect(findSkills('C++ and C# shop, Series C, reports to the C-suite')).toEqual(['C++', 'C#'])
     expect(findSkills('Systems work in C and Rust')).toEqual(['C', 'Rust'])

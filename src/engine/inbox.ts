@@ -4,7 +4,9 @@ import type { AppStatus, Application } from './types.ts'
 /**
  * Classifies a pasted email into a suggested status change. Keyword rules only, no AI, and only
  * a suggestion: you confirm before anything changes. When several classes match, precedence
- * decides: offer, interview, assessment, rejection, reviewing, received, then recruiter outreach.
+ * decides: offer, rejection, interview, assessment, reviewing, received, then recruiter outreach.
+ * Rejection comes before interview and assessment because rejections after a later stage
+ * usually open by thanking you for that interview or assessment.
  */
 
 export type EmailKind = 'offer' | 'interview' | 'assessment' | 'rejection' | 'reviewing' | 'received' | 'recruiter' | 'other'
@@ -40,6 +42,13 @@ const RULES: readonly { kind: Exclude<EmailKind, 'other'>; test: (subject: strin
     },
   },
   {
+    kind: 'rejection',
+    test: (_, sentence) =>
+      sentence.match(
+        /\b(?:not (?:be )?moving forward|decided not to (?:move|proceed)|move forward with other candidates|pursue other candidates|other candidates whose|position has been filled|role has been filled|not been selected|were not selected|will not be proceeding|regret to inform|unable to offer you|decided to go in a different direction)\b/iu,
+      )?.[0] ?? null,
+  },
+  {
     kind: 'interview',
     test: (_, sentence) => {
       const screen = sentence.match(/\b(?:phone screen|initial screen|screening call|recruiter screen|recruiter call)\b/iu)
@@ -57,13 +66,6 @@ const RULES: readonly { kind: Exclude<EmailKind, 'other'>; test: (subject: strin
     kind: 'assessment',
     test: (_, sentence) =>
       sentence.match(/\b(?:technical assessment|technical screen|coding challenge|coding exercise|coding assessment|online assessment|take-home|take home|project assignment|hackerrank|coderpad|codesignal|codility|hackerearth)\b/iu)?.[0] ?? null,
-  },
-  {
-    kind: 'rejection',
-    test: (_, sentence) =>
-      sentence.match(
-        /\b(?:not (?:be )?moving forward|decided not to (?:move|proceed)|move forward with other candidates|pursue other candidates|other candidates whose|position has been filled|role has been filled|not been selected|were not selected|will not be proceeding|regret to inform|unable to offer you|decided to go in a different direction)\b/iu,
-      )?.[0] ?? null,
   },
   {
     kind: 'reviewing',

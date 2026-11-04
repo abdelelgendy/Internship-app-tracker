@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { planImport, type ExistingData } from '../../../scripts/lib/jobhunter-map.ts'
+import { planImport, type ExistingData } from '../../jobhunter/map.ts'
 import type { ImportPreview } from '@/data/import-middleware.ts'
 import { useData } from '@/data/data-context.ts'
 import { errorFrom, LOCAL_API_BASE, LOCAL_API_HEADER } from '@/data/localApi.ts'
@@ -79,7 +79,7 @@ export function ImportPage() {
         show(await fetchPreview(folder))
       } else {
         const plan = planImport(DEMO_JOBHUNTER_SOURCE, await readExisting(repo), { now: new Date() })
-        show({ folder: DEMO_FOLDER, plan })
+        show({ folder: DEMO_FOLDER, plan, yaml: null, profileFile: null })
       }
     } catch (error) {
       setState({ kind: 'failed', message: error instanceof Error ? error.message : String(error) })
@@ -152,6 +152,7 @@ export function ImportPage() {
           key={state.run}
           folder={state.preview.folder}
           plan={state.preview.plan}
+          yaml={state.preview.yaml}
           applyBlocked={local ? null : 'Apply is off in the demo: there is no folder on disk to write to.'}
           applying={applying}
           onApply={(choices) => apply(state.preview, choices)}

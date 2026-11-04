@@ -49,6 +49,18 @@ describe('recencyGate', () => {
     expect(recencyGate(99, 'last Tuesday', NOW, 'Northwind Apps').reason).toMatch(/can't be read/)
   })
 
+  it.each([[20], [64]])('skips a score of %s with no date, since no date could make it pass', (score) => {
+    for (const postedAt of [null, '', 'last Tuesday', hoursAgo(-2)]) {
+      const gate = recencyGate(score, postedAt, NOW, 'Shopify')
+      expect(gate.verdict).toBe('skip')
+      expect(gate.reason).toMatch(/lowest any posting age needs/)
+    }
+  })
+
+  it('still holds a score of 65 with no date, since a fresh date would pass it', () => {
+    expect(recencyGate(65, null, NOW, 'Northwind Apps').verdict).toBe('hold')
+  })
+
   it('treats a small clock skew as fresh and a future date as bad data', () => {
     expect(recencyGate(65, hoursAgo(-0.5), NOW, 'Northwind Apps').verdict).toBe('apply')
     expect(recencyGate(65, hoursAgo(-2), NOW, 'Northwind Apps').verdict).toBe('hold')
@@ -73,10 +85,10 @@ describe('experienceBand and tierOf', () => {
     [{ level: 'junior' }, 15, 10, 0, 1, false],
     [{ level: 'intern' }, 15, 8, 0, 1, false],
     [{ level: 'unknown', yearsMin: 0, yearsMax: 2 }, 15, 10, 0, 1, false],
-    [{ level: 'unknown', yearsMin: 1, yearsMax: null }, 15, 10, 0, 1, false],
+    [{ level: 'unknown', yearsMin: 1, yearsMax: null }, 8, 0, 0, 2, false],
     [{ level: 'unknown', yearsMin: 1, yearsMax: 3 }, 12, 5, 0, 2, false],
     [{ level: 'unknown', yearsMin: 2, yearsMax: 3 }, 12, 5, 0, 2, false],
-    [{ level: 'unknown', yearsMin: 2, yearsMax: null }, 12, 5, 0, 2, false],
+    [{ level: 'unknown', yearsMin: 2, yearsMax: null }, 8, 0, 0, 2, false],
     [{ level: 'unknown', yearsMin: 2, yearsMax: 4 }, 8, 0, 0, 2, false],
     [{ level: 'unknown', yearsMin: 1, yearsMax: 5 }, 8, 0, 0, 2, false],
     [{ level: 'unknown', yearsMin: 3, yearsMax: 5 }, 4, 0, -5, 3, true],
@@ -88,6 +100,16 @@ describe('experienceBand and tierOf', () => {
     const band = experienceBand(facts)
     expect([band.base, band.bonus, band.penalty, band.tier, band.stretch]).toEqual([base, bonus, penalty, tier, stretch])
     expect(tierOf(facts)).toBe(tier)
+  })
+
+  it('never ranks an open range above the closed range it contains', () => {
+    const points = (yearsMin: number, yearsMax: number | null) => {
+      const band = experienceBand({ level: 'unknown', yearsMin, yearsMax })
+      return band.base + band.bonus + band.penalty
+    }
+    expect(points(1, null)).toBeLessThan(points(1, 3))
+    expect(points(2, null)).toBeLessThanOrEqual(points(2, 4))
+    expect(points(3, null)).toBeLessThanOrEqual(points(3, 5))
   })
 })
 

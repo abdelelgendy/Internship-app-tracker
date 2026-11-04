@@ -16,9 +16,9 @@ import { useToast } from '../../ui/toast-context.ts'
 import { useStartApplication } from '../apply/useStartApplication.ts'
 import { copyText } from '../jobs/clipboard.ts'
 import { formatAge, formatDay, formatDayTime, plural, relativeDay, WORKPLACE_LABEL } from '../jobs/format.ts'
-import { CheckIcon, CopyIcon } from '../jobs/icons.tsx'
+import { CheckIcon, CopyIcon } from '../../ui/icons.tsx'
 import { tierLabel } from '../jobs/jobView.ts'
-import { LoadProblem } from '../jobs/LoadProblem.tsx'
+import { LoadProblem } from '../../ui/LoadProblem.tsx'
 import { ScoreMark } from '../jobs/ScoreParts.tsx'
 import { useNow } from '../jobs/useNow.ts'
 import { followUpNote, planToday, practiceSummary, summaryLine, type PracticeSummary, type TodayPlan } from './todayModel.ts'
@@ -341,7 +341,7 @@ function MatchesSection({
     <Section
       title="Worth applying to"
       count={plan.matchCount}
-      description="Queued jobs that pass the recency gate, best first. A highlighted score passes it."
+      description="Queued jobs that pass the recency gate, in queue order: tier 1 first, then the newest."
     >
       {plan.matches.length === 0 ? (
         <Empty>

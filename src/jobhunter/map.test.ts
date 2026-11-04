@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import type { Job } from '../../src/engine/types.ts'
-import { DEMO_JOBHUNTER_SOURCE } from '../../src/features/import/demoJobHunter.ts'
-import { planHasChanges, planImport, readJobHunterSource, stableHash, type ExistingData, type ImportPlan, type SourceReader } from './jobhunter-map.ts'
+import type { Job } from '../engine/types.ts'
+import { DEMO_JOBHUNTER_SOURCE } from '../features/import/demoJobHunter.ts'
+import { planHasChanges, planImport, readJobHunterSource, stableHash, type ExistingData, type ImportPlan, type SourceReader } from './map.ts'
 
 const NOW = new Date('2026-11-03T17:00:00Z')
 const EMPTY: ExistingData = { jobs: [], applications: [], profile: null, decks: [], exercises: [], stories: [], companies: [] }

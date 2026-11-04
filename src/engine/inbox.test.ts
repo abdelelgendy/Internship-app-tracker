@@ -33,6 +33,17 @@ describe('classifyEmail', () => {
     expect(classifyEmail('Your application', 'Thank you for applying. We regret to inform you that we chose other candidates.').kind).toBe('rejection')
   })
 
+  it.each([
+    'Hi Sam, thank you for completing the coding challenge. Unfortunately, we will not be moving forward with your application.',
+    'Hi Sam, thank you for your interview call with our team last week. We regret to inform you that we have decided not to proceed.',
+    'Hi Sam, thanks for taking the HackerRank assessment. After careful review we have decided to move forward with other candidates.',
+  ])('reads a rejection after an interview or assessment as a rejection: %s', (body) => {
+    const result = classifyEmail('Your application', body)
+    expect(result.kind).toBe('rejection')
+    expect(result.suggestedStatus).toBe('rejected')
+    expect(result.alert).toBe('none')
+  })
+
   it('does not read "unfortunately" alone as a rejection', () => {
     expect(classifyEmail('Scheduling', 'Unfortunately I have to move our call. Are you available for an interview Friday?').kind).toBe('interview')
     expect(classifyEmail('Note', 'Unfortunately the office is closed Monday.').kind).toBe('other')
@@ -64,7 +75,7 @@ describe('matchApplication', () => {
   })
 
   it('matches on the sender domain', () => {
-    expect(matchApplication({ subject: 'Update', body: 'Thanks for applying.', from: 'jobs@globex.com' }, apps)?.id).toBe('globex')
+    expect(matchApplication({ subject: 'Update', body: 'Thanks for applying.', from: 'jobs@globex.example' }, apps)?.id).toBe('globex')
   })
 
   it('returns null when no company matches', () => {

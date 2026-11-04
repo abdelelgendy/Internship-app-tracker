@@ -24,10 +24,10 @@ export function ExerciseBoard({ exercises, progress }: { exercises: Exercise[]; 
     <div className="grid gap-4 xl:grid-cols-3">
       {EXERCISE_COLUMNS.map((column) => (
         <section key={column.status} aria-labelledby={`exercises-${column.status}`} className="min-w-0 rounded-lg bg-surface-2/60 p-2">
-          <h3 id={`exercises-${column.status}`} className="flex items-center gap-2 px-2 pt-1 pb-2 text-[0.8125rem] font-semibold text-fg">
+          <h2 id={`exercises-${column.status}`} className="flex items-center gap-2 px-2 pt-1 pb-2 text-[0.8125rem] font-semibold text-fg">
             {column.label}
             <span className="font-mono text-xs font-normal text-fg-subtle tabular-nums">{groups[column.status].length}</span>
-          </h3>
+          </h2>
           {groups[column.status].length === 0 ? (
             <p className="px-2 pb-2 text-[0.8125rem] text-fg-muted">{column.status === 'done' ? 'Nothing finished yet.' : 'Nothing here.'}</p>
           ) : (

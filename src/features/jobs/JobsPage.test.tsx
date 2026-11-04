@@ -56,6 +56,8 @@ describe('Jobs', { timeout: 15_000 }, () => {
     await user.click(within(dialog).getByRole('button', { name: 'Add job' }))
     expect(within(dialog).getByText('Paste the full posting address, starting with https://')).toBeInTheDocument()
     expect(within(dialog).getByText(/Paste the full description/)).toBeInTheDocument()
+    // Focus moves to the first field with an error, so a screen reader says what is wrong.
+    expect(within(dialog).getByRole('textbox', { name: /Posting URL/ })).toHaveFocus()
   })
 
   it('shortlists the selected jobs in one go', async () => {

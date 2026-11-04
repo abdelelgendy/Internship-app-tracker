@@ -114,7 +114,10 @@ function ProfileEditor({ saved, readOnly, refreshing }: { saved: Profile; readOn
 
   return (
     <>
-      <PageHeader title="Profile" description="Your details, skills, saved answers and cover letter rules. They stay in your data folder." />
+      <PageHeader
+        title="Profile"
+        description={`Your details, skills, saved answers and cover letter rules. ${readOnly ? 'The demo profile stays in this browser.' : 'They stay in your data folder.'}`}
+      />
       {readOnly ? (
         <p className="mb-4 rounded-md border border-line bg-surface-2 px-3 py-2.5 text-[0.8125rem] text-fg-muted">
           This is the demo profile, so it is read-only. Run Shortlist with <code className="font-mono text-fg">npm run dev</code> to edit your own.

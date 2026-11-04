@@ -40,6 +40,11 @@ export const INITIAL_FILES: Record<string, string> = {
 
 export const INITIAL_FOLDERS = ['practice', ...Object.keys(ID_FOLDERS)]
 
+/** Own keys only: "constructor" or "__proto__" in a request path must never pass as a folder. */
+export function isIdFolder(folder: string): folder is IdFolder {
+  return Object.hasOwn(ID_FOLDERS, folder)
+}
+
 export function isFileId(id: string): boolean {
   return FILE_ID.test(id)
 }
@@ -54,12 +59,12 @@ export function idFile(folder: IdFolder, id: string): string {
  * denylist.txt is deliberately absent: only the privacy guard reads it, from disk.
  */
 export function dataFileFormat(path: string): FileFormat | null {
-  const fixed = FIXED_FILES[path]
-  if (fixed) return fixed
+  // Own keys only, so "constructor" or "valueOf" is not a contract file.
+  if (Object.hasOwn(FIXED_FILES, path)) return FIXED_FILES[path]
   const slash = path.lastIndexOf('/')
   const folder = path.slice(0, slash)
-  if (!(folder in ID_FOLDERS)) return null
-  const extension = ID_FOLDERS[folder as IdFolder]
+  if (!isIdFolder(folder)) return null
+  const extension = ID_FOLDERS[folder]
   const name = path.slice(slash + 1)
   if (!name.endsWith(extension) || !isFileId(name.slice(0, -extension.length))) return null
   return extension === '.md' ? 'markdown' : 'object'

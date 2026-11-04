@@ -65,7 +65,11 @@ describe('Profile page', () => {
     expect(screen.getByText('One self-identification answer is hidden in the demo.')).toBeInTheDocument()
     expect(screen.queryByText('Demographic and equal opportunity questions')).toBeNull()
     expect(screen.queryByRole('button', { name: 'Add answer' })).toBeNull()
-    expect(screen.getAllByRole('textbox', { name: 'Question', hidden: true })[0]).toHaveAttribute('readonly')
+    // Read-only values are text, not fields that look editable but ignore typing.
+    expect(screen.queryAllByRole('textbox', { name: 'Question', hidden: true })).toHaveLength(0)
+    await user.click(screen.getByRole('tab', { name: /^Links/ }))
+    expect(screen.queryByRole('textbox', { name: 'GitHub' })).toBeNull()
+    expect(screen.getByText('https://github.example.com/sam-rivera-sample')).toBeInTheDocument()
   })
 
   it('validates before saving, then saves to the repo', { timeout: 15_000 }, async () => {

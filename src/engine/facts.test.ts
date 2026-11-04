@@ -26,6 +26,16 @@ describe('extractYears', () => {
     ['0-2 years experience', 0, 2],
     ['5 or more years of hands-on experience', 5, null],
     ['3+ yrs experience', 3, null],
+    ['4+ years as a software engineer.', 4, null],
+    ['4+ years as a full-stack developer.', 4, null],
+    ['Experience: 4+ years', 4, null],
+    ['Minimum experience required: 3 years', 3, null],
+    ['Years of experience: 4+', 4, null],
+    ['Years of relevant experience: 2-4', 2, 4],
+    ['4 years of relevant work in a SaaS company.', 4, null],
+    ['3 years in software development', 3, null],
+    ['You bring 5+ years shipping production web apps.', 5, null],
+    ['Requirements\n- 4+ years\n- Strong TypeScript', 4, null],
   ])('%s -> %s to %s', (text, min, max) => {
     expect(extractYears(text)).toEqual({ min, max })
   })
@@ -37,8 +47,15 @@ describe('extractYears', () => {
     'We offer a 2 year warranty.',
     'No experience requirements listed.',
     'Looking for someone years ahead in experience.',
+    'Trusted for 10+ years as a leading provider of payroll software.',
+    'We have shipped on time 3 years in a row.',
+    'We sponsor a 2 year work permit for the right candidate.',
   ])('ignores years that are not about the candidate: %s', (text) => {
     expect(extractYears(text)).toEqual({ min: null, max: null })
+  })
+
+  it('does not read a count after "years of experience" without a colon as a label', () => {
+    expect(extractYears('5+ years of experience 2 of which in React.')).toEqual({ min: 5, max: null })
   })
 
   it('takes the most demanding requirement', () => {

@@ -19,9 +19,9 @@ import { Skeleton, SkeletonText } from '../../ui/Skeleton.tsx'
 import { buttonClass } from '../../ui/styles.ts'
 import { useToast } from '../../ui/toast-context.ts'
 import { formatDay, formatDayTime, fromLocalInputValue, plural, toLocalInputValue } from '../jobs/format.ts'
-import { CheckIcon, ExternalIcon } from '../jobs/icons.tsx'
+import { CheckIcon, ExternalIcon } from '../../ui/icons.tsx'
 import { scoreFor, tierLabel } from '../jobs/jobView.ts'
-import { LoadProblem } from '../jobs/LoadProblem.tsx'
+import { LoadProblem } from '../../ui/LoadProblem.tsx'
 import { ScoreMark, VerdictBadge } from '../jobs/ScoreParts.tsx'
 import { useNow } from '../jobs/useNow.ts'
 import { answerRows, answerStates, recordSubmission, resumeAdvice, resumeVersions, submissionTimeProblem } from './applyModel.ts'
@@ -56,7 +56,7 @@ export function ApplyPage() {
           title="No application with this id"
           description={
             <>
-              Nothing in your applications has the id <span className="font-mono break-all text-fg">{applicationId}</span>. Start one from a
+              Nothing in your applications has the id <span className="font-mono break-words text-fg">{applicationId}</span>. Start one from a
               job instead.
             </>
           }
@@ -161,9 +161,11 @@ function ApplyKit({
   const others = useMemo(() => applications.filter((entry) => entry.id !== app.id), [applications, app.id])
   const rows = useMemo(() => answerRows(profile, job, facts, others, draft.custom), [profile, job, facts, others, draft.custom])
   const states = answerStates(rows, draft)
-  const usedAnswers = Object.fromEntries(
-    states.filter((state) => state.used && state.value.trim()).map((state) => [state.row.question, state.value.trim()]),
-  )
+  // Answers npm run prefill already recorded count as used too; the kit's own value wins for the same question.
+  const usedAnswers = {
+    ...(app.answersUsed ?? {}),
+    ...Object.fromEntries(states.filter((state) => state.used && state.value.trim()).map((state) => [state.row.question, state.value.trim()])),
+  }
 
   // The cover letter saves itself a moment after you stop typing.
   const [letter, setLetter] = useState(initialCover)
@@ -276,7 +278,7 @@ function ApplyKit({
                 <ExternalIcon />
                 <span className="sr-only">(opens in a new tab)</span>
               </a>
-              <span className="min-w-0 font-mono text-xs break-all text-fg-muted">{hostOf(job.url)}</span>
+              <span className="min-w-0 font-mono text-xs break-words text-fg-muted">{hostOf(job.url)}</span>
             </div>
             {score ? (
               <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 border-t border-line pt-3 text-[0.8125rem]">
@@ -344,24 +346,26 @@ function ApplyKit({
 
         <aside aria-label="Submit" className="min-w-0 xl:sticky xl:top-6">
           <Card>
-            <CardHeader title="5. Submit and record" description="Submit on their site first. Then record it here." />
+            <div className="flex items-start gap-3 border-b border-line px-4 py-3">
+              <StepNumber number={5} done={false} />
+              <div className="min-w-0">
+                <h2 className="text-sm font-semibold text-fg">
+                  <span className="sr-only">Step 5: </span>
+                  Submit and record
+                </h2>
+                <p className="mt-0.5 text-[0.8125rem] text-fg-muted">Submit on their site first. Then record it here.</p>
+              </div>
+            </div>
             <CardBody className="space-y-4">
+              {/* Status marks, not checkbox shapes: these follow the steps and can't be ticked here. */}
               <ul className="space-y-1.5 text-[0.8125rem]">
                 {steps.map((step) => (
                   <li key={step.title} className="flex items-center gap-2">
-                    <span
-                      className={cx(
-                        'flex size-4 shrink-0 items-center justify-center rounded-sm border',
-                        step.done ? 'border-fg bg-fg text-surface' : 'border-line-strong',
-                      )}
-                      aria-hidden="true"
-                    >
-                      {step.done ? <CheckIcon className="size-3" /> : null}
+                    <span aria-hidden="true" className="flex size-4 shrink-0 items-center justify-center">
+                      {step.done ? <CheckIcon className="size-3.5 text-success-ink" /> : <span className="size-1.5 rounded-full bg-line-strong" />}
                     </span>
-                    <span className={step.done ? 'text-fg' : 'text-fg-muted'}>
-                      {step.title}
-                      <span className="sr-only">{step.done ? ', done' : ', not done yet'}</span>
-                    </span>
+                    <span className={cx('min-w-0 flex-1', step.done ? 'text-fg' : 'text-fg-muted')}>{step.title}</span>
+                    <span className={cx('text-xs', step.done ? 'text-success-ink' : 'text-fg-subtle')}>{step.done ? 'Done' : 'To do'}</span>
                   </li>
                 ))}
               </ul>
@@ -403,20 +407,26 @@ function hostOf(url: string): string {
   }
 }
 
+function StepNumber({ number, done }: { number: number; done: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cx(
+        'flex size-6 shrink-0 items-center justify-center rounded-full border font-mono text-xs font-semibold',
+        done ? 'border-fg bg-fg text-surface' : 'border-line-strong text-fg-muted',
+      )}
+    >
+      {done ? <CheckIcon className="size-3.5" /> : number}
+    </span>
+  )
+}
+
 function Step({ number, title, done, children }: { number: number; title: string; done: boolean; children: ReactNode }) {
   return (
     <li>
       <Card>
         <div className="flex items-center gap-3 border-b border-line px-4 py-3">
-          <span
-            aria-hidden="true"
-            className={cx(
-              'flex size-6 shrink-0 items-center justify-center rounded-full border font-mono text-xs font-semibold',
-              done ? 'border-fg bg-fg text-surface' : 'border-line-strong text-fg-muted',
-            )}
-          >
-            {done ? <CheckIcon className="size-3.5" /> : number}
-          </span>
+          <StepNumber number={number} done={done} />
           <h2 className="text-sm font-semibold text-fg">
             <span className="sr-only">Step {number}: </span>
             {title}
@@ -448,7 +458,8 @@ function RecordDialog({
   resume: string
   letterWords: number
 }) {
-  const [when, setWhen] = useState(() => toLocalInputValue(now))
+  // The clock when the dialog opens: the page's `now` ticks once a minute and can be a minute behind.
+  const [when, setWhen] = useState(() => toLocalInputValue(new Date()))
   const [busy, setBusy] = useState(false)
   const at = fromLocalInputValue(when)
   const problem = submissionTimeProblem(at, now)

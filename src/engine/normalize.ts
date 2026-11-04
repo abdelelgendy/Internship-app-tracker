@@ -208,7 +208,8 @@ export function isUsOnlyRemoteLocation(location: string): boolean {
   const text = normalizeText(location)
   return (
     /\bremote\b/i.test(text) &&
-    /\b(?:US|USA|U\.S\.|United States)\b/.test(text) &&
+    // Lookarounds, not \b: a word boundary never follows the final dot of "U.S.".
+    /(?<!\w)(?:US|USA|U\.S\.(?:A\.?)?|United States)(?!\w)/.test(text) &&
     !/\b(?:canada|north america|americas|global|worldwide|anywhere)\b/i.test(text)
   )
 }

@@ -3,14 +3,14 @@ import { createServer, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { createServer as createViteServer, type Plugin, type ViteDevServer } from 'vite'
+import { createServer as createViteServer, type ViteDevServer } from 'vite'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { createImportHandler, type ImportPreview } from '../src/data/import-middleware.ts'
+import type { ImportPreview } from '../src/data/import-middleware.ts'
 import { LOCAL_API_HEADER } from '../src/data/localApi.ts'
 import { applyImportPlan } from '../src/features/import/applyImport.ts'
 import { DEMO_JOBHUNTER_SOURCE } from '../src/features/import/demoJobHunter.ts'
 import { localDataPlugin } from '../vite.config.ts'
-import { planHasChanges } from './lib/jobhunter-map.ts'
+import { planHasChanges } from '../src/jobhunter/map.ts'
 
 let base: string
 let dataDir: string
@@ -18,16 +18,6 @@ let jobHunter: string
 let vite: ViteDevServer
 let http: Server
 let origin: string
-
-/** The same registration vite.config.ts needs: the import handler first, then the main local API. */
-function importPlugin(): Plugin {
-  return {
-    name: 'test-import',
-    configureServer(server) {
-      server.middlewares.use('/__local/import', createImportHandler({ dataDir, repoRoot: base, fs: { readFile, readdir }, path }))
-    },
-  }
-}
 
 async function writeSource(root: string) {
   const files = [
@@ -58,7 +48,7 @@ beforeAll(async () => {
     root: base,
     logLevel: 'silent',
     server: { middlewareMode: true, hmr: false, ws: false },
-    plugins: [importPlugin(), localDataPlugin({ dataDir, repoRoot: base })],
+    plugins: [localDataPlugin({ dataDir, repoRoot: base })],
   })
   http = createServer(vite.middlewares)
   await new Promise<void>((resolve) => http.listen(0, '127.0.0.1', resolve))

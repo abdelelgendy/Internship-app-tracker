@@ -10,8 +10,8 @@
  *
  * Pure: the caller parses the YAML and passes the object in.
  */
-import { normalizeCompany } from '../../src/engine/normalize.ts'
-import type { Profile, SkillLevel, Workplace } from '../../src/engine/types.ts'
+import { normalizeCompany } from '../engine/normalize.ts'
+import type { Profile, SkillLevel, Workplace } from '../engine/types.ts'
 
 export interface UnverifiedItem {
   kind: 'experience' | 'answer' | 'bullet'
@@ -53,7 +53,7 @@ export function monthOf(text: string): string | null {
 
 /** "Jun 2026 to present" as start "2026-06" and end null; "Feb 2026 to Mar 2026" as two months. */
 export function dateRange(text: string): { start: string; end: string | null } | null {
-  const [from, to = ''] = text.split(/\s+(?:to|until|through|-|–|—)\s+/i)
+  const [from, to = ''] = text.split(/\s+(?:to|until|through|-|\u2013|\u2014)\s+/i)
   const start = monthOf(from)
   if (!start) return null
   if (/\b(?:present|now|current)\b/i.test(to) || to.trim() === '') return { start, end: null }
@@ -80,7 +80,7 @@ function skillsFrom(skills: Row): Profile['skills'] {
 }
 
 /** Self-identification questions: never answered from a file, always by the person, per application. */
-const DEMOGRAPHIC = /\b(?:gender|pronouns?|race|ethnicity|hispanic|latin[oa]|veteran|disabilit(?:y|ies)|transgender|lgbtq|sexual orientation|self-identification)\b/i
+export const DEMOGRAPHIC = /\b(?:gender|pronouns?|race|ethnicity|hispanic|latin[oa]|veteran|disabilit(?:y|ies)|transgender|lgbtq|sexual orientation|self-identification)\b/i
 
 function slug(text: string): string {
   return text
@@ -128,7 +128,7 @@ function answersFrom(answers: Row, unverified: UnverifiedItem[]): Profile['answe
   return out
 }
 
-/** Pairs a resume_bullets key (such as "outlier_ugc") with an employer ("Outlier UGC"). */
+/** Pairs a resume_bullets key (such as "pinecrest_studio") with an employer ("Pinecrest Studio"). */
 function employerFor(key: string, orgs: readonly string[]): string | undefined {
   const words = key.toLowerCase().split(/[_-]+/).filter(Boolean)
   return orgs.find((org) => {

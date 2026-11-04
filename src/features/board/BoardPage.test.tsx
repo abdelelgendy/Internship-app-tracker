@@ -93,13 +93,17 @@ describe('Board moves', { timeout: 15_000 }, () => {
     const source = sampleSource()
     renderApp('/board', undefined, source)
 
-    const menu = await screen.findByRole('combobox', { name: 'Move Glacier Byte, Junior Developer, Client Projects to another status' })
+    const menu = await screen.findByRole('combobox', { name: 'New status for Glacier Byte, Junior Developer, Client Projects' })
     const options = within(menu)
       .getAllByRole('option')
       .map((option) => option.textContent)
-    expect(options).toEqual(['Move to...', 'Rejected', 'Withdrawn'])
+    expect(options).toEqual(['Move to…', 'Rejected', 'Withdrawn'])
 
+    // Choosing an option only picks it; nothing moves until Move is pressed.
     await user.selectOptions(menu, 'Withdrawn')
+    expect(screen.queryByText('Moved to Withdrawn')).not.toBeInTheDocument()
+    expect((await source.repo.listApplications()).find((app) => app.id === 'sample-app-09')?.status).not.toBe('withdrawn')
+    await user.click(screen.getByRole('button', { name: 'Move Glacier Byte, Junior Developer, Client Projects to Withdrawn' }))
     expect(await screen.findByText('Moved to Withdrawn')).toBeInTheDocument()
     await waitFor(async () => {
       const saved = (await source.repo.listApplications()).find((app) => app.id === 'sample-app-09')

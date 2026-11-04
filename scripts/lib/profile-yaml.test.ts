@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { parse } from 'yaml'
-import { dateRange, monthOf, profileFromYaml } from './profile-yaml.ts'
+import { dateRange, monthOf, profileFromYaml } from '../../src/jobhunter/profile-yaml.ts'
 
 const fixture = parse(readFileSync(new URL('../fixtures/jobhunter/config/profile.yaml', import.meta.url), 'utf8'))
 

@@ -87,7 +87,7 @@ export function StoryLibrary({ stories }: { stories: StarStory[] }) {
                   </dl>
                   {story.questions.length > 0 ? (
                     <div className="mt-4">
-                      <h4 className="text-xs font-semibold tracking-wide text-fg-muted uppercase">Answers questions like</h4>
+                      <h2 className="text-xs font-semibold tracking-wide text-fg-muted uppercase">Answers questions like</h2>
                       <ul className="mt-1.5 list-disc space-y-0.5 pl-5 text-fg">
                         {story.questions.map((question) => (
                           <li key={question} className="break-words">

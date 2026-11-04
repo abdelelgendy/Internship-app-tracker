@@ -157,11 +157,11 @@ function DeckList({ decks, progress, now }: { decks: PracticeDeck[]; progress: P
           <li key={deck.id} className="min-w-0">
             <Card className="flex h-full flex-col p-4">
               <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-                <h3 className="min-w-0 font-semibold break-words text-fg">
+                <h2 className="min-w-0 font-semibold break-words text-fg">
                   <Link to={`/practice/${encodeURIComponent(deck.id)}`} className="hover:underline hover:underline-offset-2">
                     {deck.title}
                   </Link>
-                </h3>
+                </h2>
                 {deck.project ? <Badge>{deck.project}</Badge> : null}
               </div>
               <p className="mt-1 text-[0.8125rem] break-words text-fg-muted">{deck.description}</p>

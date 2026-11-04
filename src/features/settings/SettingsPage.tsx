@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react'
+import { useShortcutsEnabled } from '@/app/shortcutsSetting.ts'
 import { useTheme } from '@/app/useTheme.ts'
 import type { ThemePreference } from '@/app/theme.ts'
 import { useData } from '@/data/data-context.ts'
@@ -6,23 +7,26 @@ import type { DataMode } from '@/data/mode.ts'
 import { Button } from '@/ui/Button.tsx'
 import { Card, CardBody, CardHeader } from '@/ui/Card.tsx'
 import { cx } from '@/ui/cx.ts'
-import { Dialog } from '@/ui/Dialog.tsx'
+import { ResetSampleDialog } from '@/app/ResetSampleDialog.tsx'
+import { Kbd } from '@/ui/Kbd.tsx'
 import { PageHeader } from '@/ui/PageHeader.tsx'
 import { useToast } from '@/ui/toast-context.ts'
 import { collectExport, exportFileName } from './exportData.ts'
 
 function Code({ children }: { children: ReactNode }) {
-  return <code className="rounded bg-surface-2 px-1 py-px font-mono text-[0.8125rem] break-all text-fg">{children}</code>
+  // break-words, not break-all: "npm run dev" wraps at its spaces, and only a long path breaks mid-word.
+  return <code className="rounded bg-surface-2 px-1 py-px font-mono text-[0.8125rem] break-words text-fg">{children}</code>
 }
 
 export function SettingsPage() {
   const { mode } = useData()
   return (
     <>
-      <PageHeader title="Settings" description="Where your data lives, how Shortlist looks, and a full export." />
+      <PageHeader title="Settings" description="Where your data lives, how Shortlist looks, keyboard shortcuts, and a full export." />
       <div className="max-w-3xl space-y-4">
         {mode.kind === 'local' ? <LocalData dataDir={mode.dataDir} /> : <SampleData mode={mode} />}
         <Appearance />
+        <Keyboard />
         <Export />
       </div>
     </>
@@ -50,24 +54,8 @@ function LocalData({ dataDir }: { dataDir: string }) {
 
 function SampleData({ mode }: { mode: Extract<DataMode, { kind: 'sample' }> }) {
   const { resetSampleData } = useData()
-  const toast = useToast()
   const [confirming, setConfirming] = useState(false)
-  const [busy, setBusy] = useState(false)
   const kept = mode.storage === 'memory' ? "This browser can't keep changes, so they last until you reload." : 'Your changes stay in this browser and are never uploaded.'
-
-  async function reset() {
-    if (!resetSampleData) return
-    setBusy(true)
-    try {
-      await resetSampleData()
-      setConfirming(false)
-      toast.show({ title: 'Sample data reset', tone: 'success' })
-    } catch (error) {
-      toast.show({ title: "Couldn't reset sample data", description: error instanceof Error ? error.message : String(error), tone: 'danger' })
-    } finally {
-      setBusy(false)
-    }
-  }
 
   return (
     <Card>
@@ -88,21 +76,7 @@ function SampleData({ mode }: { mode: Extract<DataMode, { kind: 'sample' }> }) {
           To use your own data, clone the repo and run <Code>npm run dev</Code>. It reads and writes a private folder on your computer.
         </p>
       </CardBody>
-      <Dialog
-        open={confirming}
-        onClose={() => setConfirming(false)}
-        size="sm"
-        title="Reset sample data?"
-        description="Everything you changed in this demo goes back to the original sample data. Only this browser is affected."
-        footer={
-          <>
-            <Button onClick={() => setConfirming(false)}>Cancel</Button>
-            <Button variant="danger" disabled={busy} onClick={reset}>
-              Reset sample data
-            </Button>
-          </>
-        }
-      />
+      <ResetSampleDialog open={confirming} onClose={() => setConfirming(false)} />
     </Card>
   )
 }
@@ -139,6 +113,27 @@ function Appearance() {
             ))}
           </div>
         </fieldset>
+      </CardBody>
+    </Card>
+  )
+}
+
+function Keyboard() {
+  const [enabled, setEnabled] = useShortcutsEnabled()
+  return (
+    <Card>
+      <CardHeader title="Keyboard shortcuts" />
+      <CardBody>
+        <label className="flex cursor-pointer items-start gap-2.5 text-[0.8125rem]">
+          <input type="checkbox" className="mt-0.5 size-4 shrink-0" checked={enabled} onChange={(event) => setEnabled(event.target.checked)} />
+          <span className="min-w-0">
+            <span className="block font-medium text-fg">Use single-key shortcuts</span>
+            <span className="block text-fg-muted">
+              <Kbd>g</Kbd> then a letter opens a page, <Kbd>?</Kbd> lists them, and <Kbd>1</Kbd> to <Kbd>4</Kbd> grade a practice card. Turn them off if you
+              use speech input or press keys by accident. This is saved in this browser.
+            </span>
+          </span>
+        </label>
       </CardBody>
     </Card>
   )

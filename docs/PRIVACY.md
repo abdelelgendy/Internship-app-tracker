@@ -23,7 +23,7 @@ The layout follows the data contract in [src/engine/types.ts](../src/engine/type
 
 The first time `npm run dev` opens a folder it creates this layout with empty files, readable only by you (folders `700`, files `600`). It never overwrites a file that exists and never invents a profile.
 
-Saves are safe to interrupt: each file is written beside the old one and renamed over it. In the JSONL files the last line for an id is the current one, and a save keeps any line it cannot read, so a script and the app can share a file without losing rows.
+Saves are safe to interrupt: each file is written beside the old one and renamed over it. In the JSONL files the last line for an id is the current one, and a save keeps any line it cannot read, so a script and the app can share a file without losing rows. They do not lose each other's changes either: the scripts and the dev server take the same lock file (`<file>.lock`) for every write, a script builds its change from the rows as they are at write time and changes only its own fields (`npm run score` the score and, with `--set-status`, the status; `npm run prefill` the answers it filled), and the app refuses to save over a row that changed after it loaded it, then reloads it.
 
 ## What stays on your machine
 

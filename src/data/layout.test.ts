@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { contentProblem, dataFileFormat, idFile, INITIAL_FILES } from './layout.ts'
+import { contentProblem, dataFileFormat, idFile, INITIAL_FILES, isIdFolder } from './layout.ts'
 
 describe('dataFileFormat', () => {
   it('knows every contract file the app reads and writes', () => {
@@ -27,9 +27,24 @@ describe('dataFileFormat', () => {
       'covers/x y.md',
       '/etc/passwd',
       '',
+      'constructor',
+      'valueOf',
+      'toString',
+      'hasOwnProperty',
+      '__proto__',
+      'constructor/x.json',
+      '__proto__/x.md',
     ]) {
       expect(dataFileFormat(path), path).toBeNull()
     }
+  })
+})
+
+describe('isIdFolder', () => {
+  it('accepts only the contract folders, never an Object.prototype name', () => {
+    expect(isIdFolder('practice/decks')).toBe(true)
+    expect(isIdFolder('covers')).toBe(true)
+    for (const name of ['toString', 'constructor', '__proto__', 'practice']) expect(isIdFolder(name), name).toBe(false)
   })
 })
 

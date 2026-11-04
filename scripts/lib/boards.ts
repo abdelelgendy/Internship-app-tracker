@@ -105,8 +105,8 @@ export function htmlToText(html: string): string {
       .replace(/<[^>]*>/g, ' '),
   )
     .split('\n')
-    .map((line) => line.replace(/[ \t ]+/g, ' ').trim())
-    .filter((line, index, lines) => line !== '' || (index > 0 && lines[index - 1] !== ''))
+    .map((line) => line.replace(/[ \t\u00a0]+/g, ' ').trim())
+    .filter(Boolean)
     .join('\n')
     .trim()
 }

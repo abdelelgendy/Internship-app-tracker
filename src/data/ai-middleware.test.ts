@@ -122,6 +122,32 @@ describe('the draft endpoint', () => {
   })
 })
 
+describe('the one-at-a-time guard', () => {
+  /** A request whose body arrives a moment later, like a real socket. */
+  const slow = (text: string) => ({
+    ...request('/draft-cover', { method: 'POST' }),
+    async *[Symbol.asyncIterator]() {
+      await new Promise((resolve) => setTimeout(resolve, 10))
+      yield new TextEncoder().encode(text)
+    },
+  })
+
+  it('holds while the body is still arriving, so a double click spends once', async () => {
+    const writer = vi.fn<DraftWriter>(async () => 'draft')
+    const handler = createAiHandler({ writer })
+    const results = await Promise.all([call(handler, slow(JSON.stringify(body))), call(handler, slow(JSON.stringify(body)))])
+    expect(results.map((result) => result.status).sort()).toEqual([200, 429])
+    expect(writer).toHaveBeenCalledTimes(1)
+    expect((await call(handler, slow(JSON.stringify(body)))).status).toBe(200)
+  })
+
+  it('is released when the body is unreadable', async () => {
+    const handler = createAiHandler({ writer: async () => 'draft' })
+    expect((await call(handler, slow('{nope'))).status).toBe(400)
+    expect((await call(handler, slow(JSON.stringify(body)))).status).toBe(200)
+  })
+})
+
 describe('parseDraftRequest', () => {
   it('checks sizes and shapes', () => {
     expect(() => parseDraftRequest({ ...body, style: { maxWords: 2000 } })).toThrow(/maxWords/)

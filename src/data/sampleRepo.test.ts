@@ -140,7 +140,14 @@ describe('createSampleRepo', () => {
 })
 
 describe('shiftSampleDates', () => {
-  it('shifts full timestamps by whole minutes and plain dates by calendar days, nothing else', () => {
+  it('keeps times on the half hour, so they read the same on every visit', () => {
+    const at = { interview: '2026-11-05T15:00:00.000Z' }
+    const visits = ['2026-11-04T02:14:00.000Z', '2026-11-04T02:16:00.000Z', '2026-11-04T02:21:00.000Z'].map((now) => shiftSampleDates(at, new Date(now)).interview)
+    expect(new Set(visits).size).toBe(1)
+    expect(visits[0]).toMatch(/T\d{2}:(?:00|30):00\.000Z$/)
+  })
+
+  it('shifts full timestamps by whole half hours and plain dates by calendar days, nothing else', () => {
     const now = new Date('2026-11-05T09:30:59.000Z')
     const value = { at: '2026-11-03T17:00:00.000Z', day: '2026-11-03', month: '2026-06', text: 'Posted 2026-11-03', list: ['2026-11-01T00:00:00Z'] }
     expect(shiftSampleDates(value, now)).toEqual({

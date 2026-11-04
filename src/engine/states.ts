@@ -98,10 +98,18 @@ export function isTerminal(status: AppStatus): boolean {
 /** Submitted applications that are still waiting on the company. */
 export const AWAITING_REPLY: readonly AppStatus[] = ['applied', 'confirmed', 'reviewing']
 
+// Only reachable through "applied". "withdrawn" is not here: a draft can be withdrawn unsent.
+const PAST_APPLIED: readonly AppStatus[] = [
+  'applied', 'confirmed', 'reviewing', 'assessment_pending', 'interview_scheduled', 'offer', 'rejected', 'ghosted',
+]
+
 /** True once the application has been submitted, whatever happened after. */
-export function wasSubmitted(app: Pick<Application, 'status' | 'history'>): boolean {
-  const notYet: readonly AppStatus[] = ['draft', 'prepared']
-  return !notYet.includes(app.status) || app.history.some((entry) => entry.status === 'applied')
+export function wasSubmitted(app: Pick<Application, 'status' | 'history' | 'appliedAt'>): boolean {
+  return (
+    PAST_APPLIED.includes(app.status) ||
+    Boolean(app.appliedAt) ||
+    app.history.some((entry) => entry.status === 'applied')
+  )
 }
 
 export type TransitionResult = { ok: true; app: Application } | { ok: false; reason: string }

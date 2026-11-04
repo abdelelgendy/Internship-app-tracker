@@ -1,5 +1,6 @@
 import { useEffect, useEffectEvent } from 'react'
 import { NAV_ITEMS } from './nav.ts'
+import { shortcutsEnabled } from './shortcutsSetting.ts'
 
 /** How long after g the second key still counts, in milliseconds. */
 const SEQUENCE_WINDOW_MS = 1500
@@ -13,7 +14,8 @@ function isTyping(target: EventTarget | null): boolean {
 
 /**
  * App-wide shortcuts: g then a letter opens a page (see NAV_ITEMS), ? shows the list.
- * They stay out of the way while typing, while a dialog is open, and when a modifier is held.
+ * They stay out of the way while typing, while a dialog is open, when a modifier is held, and
+ * when they are turned off in Settings.
  */
 export function useKeyboardShortcuts({ onNavigate, onShowHelp }: { onNavigate: (to: string) => void; onShowHelp: () => void }) {
   const handleKeyDown = useEffectEvent((event: KeyboardEvent, goPressedAt: { current: number | null }) => {
@@ -26,7 +28,8 @@ export function useKeyboardShortcuts({ onNavigate, onShowHelp }: { onNavigate: (
       event.ctrlKey ||
       event.altKey ||
       isTyping(event.target) ||
-      document.querySelector('dialog[open]')
+      document.querySelector('dialog[open]') ||
+      !shortcutsEnabled()
     ) {
       return
     }

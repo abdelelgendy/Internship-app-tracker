@@ -67,8 +67,8 @@ function savedEntryDecision(entry: Profile['answers'][number]): AnswerDecision {
 
 /**
  * The engine's truth table for "Do you have experience with X?", applied to a skill we already
- * know. Used when the engine reads more than one skill into the question: "Node.js" also
- * matches its "js" spelling of JavaScript.
+ * know. Used when the engine reads more than one skill into the question: "React Native" also
+ * names React.
  */
 function skillDecision(skill: string, profile: Profile): AnswerDecision {
   const answerId = `skill:${skill.toLowerCase()}`
@@ -191,7 +191,8 @@ export interface Submission {
 
 /**
  * Records that you submitted the application yourself: the status moves to applied (which sets
- * appliedAt), the answers you used are kept, and the follow-up is scheduled for day 7.
+ * appliedAt), the answers you used are added to the ones already recorded (npm run prefill
+ * records the answers it filled), and the follow-up is scheduled for day 7.
  */
 export function recordSubmission(app: Application, submission: Submission, timeZone: string): TransitionResult {
   const moved = transition(app, 'applied', submission.at, 'me')
@@ -206,7 +207,7 @@ export function recordSubmission(app: Application, submission: Submission, timeZ
     ok: true,
     app: {
       ...moved.app,
-      answersUsed: answers,
+      answersUsed: { ...(moved.app.answersUsed ?? {}), ...answers },
       resumeVersion: submission.resumeVersion?.trim() || moved.app.resumeVersion,
       coverLetterId: submission.coverLetterId ?? moved.app.coverLetterId,
       followUp: dueAt ? { dueAt } : moved.app.followUp,

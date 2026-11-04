@@ -42,9 +42,10 @@ function setup(denylist: string[] | null = ['# Comments and blank lines are skip
     git('add', '--force', file)
   }
   const check = (...args: string[]) => {
+    // Without a denylist the folder is the unconfigured default; a configured folder must have one.
     const result = spawnSync(process.execPath, [SCRIPT, ...args], {
       cwd: root,
-      env: { ...process.env, COPILOT_DATA_DIR: dataDir },
+      env: { ...process.env, COPILOT_DATA_DIR: denylist ? dataDir : '' },
       encoding: 'utf8',
     })
     return { status: result.status, output: `${result.stdout}${result.stderr}` }
@@ -149,6 +150,35 @@ describe('check-private', () => {
     const result = spawnSync(process.execPath, [SCRIPT], { cwd: repo.root, env: { ...process.env, COPILOT_DATA_DIR: '' }, encoding: 'utf8' })
     expect(result.status).toBe(1)
     expect(result.stderr).toContain('denylisted string')
+  })
+
+  it.each([
+    ['.env.local', (dir: string) => `COPILOT_DATA_DIR=${dir} # my real data\n`],
+    ['.env.local', (dir: string) => `export COPILOT_DATA_DIR='${dir}'\n`],
+    ['.env.local', (dir: string) => `COPILOT_DATA_DIR="${dir}" # quoted, then a comment\n`],
+    ['.env.development', (dir: string) => `COPILOT_DATA_DIR=${dir}\n`],
+    ['.env.development.local', (dir: string) => `COPILOT_DATA_DIR=${dir}\n`],
+  ])('reads COPILOT_DATA_DIR from %s the way Vite does: %#', (file, line) => {
+    const repo = setup()
+    writeFileSync(path.join(repo.root, file), line(repo.dataDir))
+    repo.stage('a.txt', `${DENYLISTED}\n`)
+    const result = spawnSync(process.execPath, [SCRIPT], { cwd: repo.root, env: { ...process.env, COPILOT_DATA_DIR: '' }, encoding: 'utf8' })
+    expect(result.status).toBe(1)
+    expect(result.stderr).toContain('denylisted string')
+  })
+
+  it('refuses to run when COPILOT_DATA_DIR points to a folder with no denylist', () => {
+    const repo = setup()
+    repo.stage('a.txt', 'nothing private\n')
+    const result = spawnSync(process.execPath, [SCRIPT], { cwd: repo.root, env: { ...process.env, COPILOT_DATA_DIR: path.join(repo.dataDir, 'typo') }, encoding: 'utf8' })
+    expect(result.status).toBe(2)
+    expect(result.stderr).toContain('has no denylist.txt')
+  })
+
+  it('reports a file in the data folder whose name starts with two dots', () => {
+    const repo = setup(null)
+    repo.stage('.private/..backup.json', '{}\n')
+    expect(repo.check()).toMatchObject({ status: 1, output: expect.stringContaining('.private/..backup.json  file is inside the private data folder') })
   })
 
   it('checks every tracked file with --all', () => {

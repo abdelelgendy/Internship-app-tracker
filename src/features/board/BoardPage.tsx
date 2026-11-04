@@ -16,7 +16,7 @@ import {
   type KeyboardCoordinateGetter,
   type UniqueIdentifier,
 } from '@dnd-kit/core'
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { defaultTimeZone, localDay, localDaysBetween, toMillis } from '../../engine/dates.ts'
 import { followUpDue } from '../../engine/followups.ts'
@@ -29,11 +29,12 @@ import { PageHeader } from '../../ui/PageHeader.tsx'
 import { Select } from '../../ui/Select.tsx'
 import { Skeleton } from '../../ui/Skeleton.tsx'
 import { APP_STATUS_DISPLAY } from '../../ui/status.ts'
+import { Button } from '../../ui/Button.tsx'
 import { buttonClass } from '../../ui/styles.ts'
 import { useToast } from '../../ui/toast-context.ts'
 import { formatDay } from '../jobs/format.ts'
-import { GripIcon } from '../jobs/icons.tsx'
-import { LoadProblem } from '../jobs/LoadProblem.tsx'
+import { GripIcon } from '../../ui/icons.tsx'
+import { LoadProblem } from '../../ui/LoadProblem.tsx'
 import { useNow } from '../jobs/useNow.ts'
 import { allowedMoves, applyMove, moveProblem } from './moves.ts'
 
@@ -52,16 +53,33 @@ interface CardData {
   name: string
 }
 
-/** Arrow keys move a picked-up card one column left or right; the card keeps its height on the page. */
+/**
+ * Arrow keys move a picked-up card one column left or right; the card keeps its height on the
+ * page. The board is scrolled here, instantly, so the target column sits at the middle of the
+ * scroll area. dnd-kit's own keyboard scrolling kicks in when a move lands past the middle, and
+ * then scrolls a little instead of moving the card, so every press must land on the middle or
+ * at the scroll area's end.
+ */
 const columnCoordinates: KeyboardCoordinateGetter = (event, { context, currentCoordinates }) => {
   const step = event.code === 'ArrowRight' ? 1 : event.code === 'ArrowLeft' ? -1 : 0
   const own = context.collisionRect
   if (step === 0 || !own) return undefined
   const from = (context.over?.id ?? (context.active?.data.current as CardData | undefined)?.status) as AppStatus | undefined
   const target = from ? COLUMNS[COLUMNS.indexOf(from) + step] : undefined
-  const rect = target ? context.droppableRects.get(target) : undefined
-  if (!rect) return undefined
-  return { x: rect.left + (rect.width - own.width) / 2, y: currentCoordinates.y }
+  const column = target ? document.querySelector<HTMLElement>(`[data-board-column="${target}"]`) : null
+  if (!column) return undefined
+  const landing = () => {
+    const rect = column.getBoundingClientRect()
+    return rect.left + (rect.width - own.width) / 2
+  }
+  const scroller = column.closest<HTMLElement>('[data-board-scroller]')
+  if (scroller) {
+    const area = scroller.getBoundingClientRect()
+    // A pixel or two short of the middle, so rounding never puts it past.
+    const middle = area.left + area.width / 2 - step * 2
+    scroller.scrollLeft += landing() - middle
+  }
+  return { x: landing(), y: currentCoordinates.y }
 }
 
 /** The column under the pointer, else the column under the card's center, else the nearest. */
@@ -91,6 +109,8 @@ export function BoardPage() {
   // Shows a move right away while the save and reload finish; ignored once newer data arrives.
   const [override, setOverride] = useState<{ base: Application[]; app: Application } | null>(null)
   const [active, setActive] = useState<Application | null>(null)
+  // Whether the card in hand has left its starting column yet, for the announcements.
+  const leftStart = useRef(false)
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: columnCoordinates }),
@@ -134,6 +154,7 @@ export function BoardPage() {
   }
 
   function handleDragStart(event: DragStartEvent) {
+    leftStart.current = false
     setActive(findApp(event.active.id) ?? null)
   }
 
@@ -150,7 +171,12 @@ export function BoardPage() {
     },
     onDragOver: ({ active: item, over }) => {
       const data = item.data.current as CardData
+      // dnd-kit reports the starting column in the same tick as the pick-up; saying it would
+      // replace the instructions before they are read.
+      if (over?.id === data.status && !leftStart.current) return undefined
+      leftStart.current = true
       if (!over) return `${data.name} is not over a column.`
+      if (over.id === data.status) return `${data.name} is back over ${label(data.status)}, where it started.`
       const problem = moveProblem(data.status, over.id as AppStatus)
       return problem ? `${label(over.id as AppStatus)}: not allowed. ${problem}` : `${data.name} is over ${label(over.id as AppStatus)}.`
     },
@@ -214,7 +240,7 @@ export function BoardPage() {
             },
           }}
         >
-          <div className="overflow-x-auto pb-3" role="region" aria-label="Applications by status" tabIndex={0}>
+          <ScrollFades>
             <div className="flex w-max items-stretch gap-3">
               {COLUMNS.map((status) => (
                 <Column
@@ -228,11 +254,48 @@ export function BoardPage() {
                 />
               ))}
             </div>
-          </div>
+          </ScrollFades>
           <DragOverlay dropAnimation={null}>{active ? <CardBody app={active} now={now} timeZone={timeZone} overlay /> : null}</DragOverlay>
         </DndContext>
       )}
     </>
+  )
+}
+
+/**
+ * The board's scroll area, with a fade on each side that still has columns out of view: overlay
+ * scrollbars (macOS, phones) show nothing until you scroll, so the fade is the only cue.
+ */
+function ScrollFades({ children }: { children: ReactNode }) {
+  const scroller = useRef<HTMLDivElement>(null)
+  const [edges, setEdges] = useState({ left: false, right: false })
+  useEffect(() => {
+    const node = scroller.current
+    if (!node) return
+    const update = () => {
+      const left = node.scrollLeft > 1
+      const right = node.scrollLeft + node.clientWidth < node.scrollWidth - 1
+      setEdges((current) => (current.left === left && current.right === right ? current : { left, right }))
+    }
+    update()
+    node.addEventListener('scroll', update, { passive: true })
+    const observer = typeof ResizeObserver === 'function' ? new ResizeObserver(update) : null
+    observer?.observe(node)
+    if (node.firstElementChild) observer?.observe(node.firstElementChild)
+    return () => {
+      node.removeEventListener('scroll', update)
+      observer?.disconnect()
+    }
+  }, [])
+  const fade = 'pointer-events-none absolute inset-y-0 w-12 from-bg to-transparent transition-opacity'
+  return (
+    <div className="relative">
+      <div ref={scroller} data-board-scroller className="overflow-x-auto pb-3" role="region" aria-label="Applications by status" tabIndex={0}>
+        {children}
+      </div>
+      <div aria-hidden="true" className={cx(fade, 'left-0 bg-linear-to-r', edges.left ? 'opacity-100' : 'opacity-0')} />
+      <div aria-hidden="true" className={cx(fade, 'right-0 bg-linear-to-l', edges.right ? 'opacity-100' : 'opacity-0')} />
+    </div>
   )
 }
 
@@ -318,28 +381,50 @@ function DraggableCard({
             <GripIcon />
           </button>
         }
-        statusControl={
-          allowedMoves(app.status).length === 0 ? null : (
-            <Select
-              size="sm"
-              aria-label={`Move ${cardName(app)} to another status`}
-              value=""
-              onChange={(event) => onMove(app, event.target.value as AppStatus)}
-              className="w-36"
-            >
-              <option value="" disabled>
-                Move to...
-              </option>
-              {allowedMoves(app.status).map((status) => (
-                <option key={status} value={status}>
-                  {label(status)}
-                </option>
-              ))}
-            </Select>
-          )
-        }
+        statusControl={allowedMoves(app.status).length === 0 ? null : <MoveControl app={app} onMove={onMove} />}
       />
     </li>
+  )
+}
+
+/**
+ * Choose a status, then press Move. Acting on the select's change alone would move the card as
+ * soon as a keyboard user browses the options: in Chrome on Windows and Linux an arrow key on a
+ * closed select changes its value.
+ */
+function MoveControl({ app, onMove }: { app: Application; onMove: (app: Application, to: AppStatus) => void }) {
+  const [target, setTarget] = useState<AppStatus | ''>('')
+  return (
+    <div className="flex items-center gap-1.5">
+      <Select
+        size="sm"
+        aria-label={`New status for ${cardName(app)}`}
+        value={target}
+        onChange={(event) => setTarget(event.target.value as AppStatus | '')}
+        className="w-32"
+      >
+        <option value="" disabled>
+          Move to…
+        </option>
+        {allowedMoves(app.status).map((status) => (
+          <option key={status} value={status}>
+            {label(status)}
+          </option>
+        ))}
+      </Select>
+      <Button
+        size="sm"
+        disabled={target === ''}
+        aria-label={target === '' ? `Move ${cardName(app)} to the chosen status` : `Move ${cardName(app)} to ${label(target)}`}
+        onClick={() => {
+          if (target === '') return
+          setTarget('')
+          onMove(app, target)
+        }}
+      >
+        Move
+      </Button>
+    </div>
   )
 }
 

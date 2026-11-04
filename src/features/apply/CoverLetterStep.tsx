@@ -13,7 +13,7 @@ export type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
 const SAVE_TEXT: Record<SaveState, string> = {
   idle: '',
-  saving: 'Saving...',
+  saving: 'Saving…',
   saved: 'Draft saved',
   error: "Couldn't save. Your text is still here.",
 }

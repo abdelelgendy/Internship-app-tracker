@@ -143,6 +143,11 @@ describe('locations', () => {
   it.each([
     ['Remote - US', true],
     ['Remote (USA)', true],
+    ['Remote - U.S.', true],
+    ['Remote, U.S.', true],
+    ['Remote (U.S.A.)', true],
+    ['Remote, US-based', true],
+    ['Remote - work with us', false],
     ['Remote, United States or Canada', false],
     ['Remote - North America', false],
     ['Austin, TX, US', false],

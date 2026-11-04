@@ -1,4 +1,5 @@
 import { useDeferredValue, useMemo, useState, type FormEvent } from 'react'
+import { flushSync } from 'react-dom'
 import { useNavigate } from 'react-router'
 import { findDuplicate } from '../../engine/dedup.ts'
 import { queueStatusFor } from '../../engine/gates.ts'
@@ -121,7 +122,10 @@ export function AddJobDialog({
   async function submit(event: FormEvent) {
     event.preventDefault()
     if (Object.keys(errors).length > 0) {
-      setShowErrors(true)
+      // Render the errors now, then move focus to the first one so a screen reader says what is wrong.
+      const form = event.currentTarget as HTMLFormElement
+      flushSync(() => setShowErrors(true))
+      form.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus()
       return
     }
     setSaving(true)
@@ -155,7 +159,7 @@ export function AddJobDialog({
         <>
           <Button onClick={close}>Cancel</Button>
           <Button variant="primary" type="submit" form="add-job-form" disabled={saving}>
-            {saving ? 'Adding...' : 'Add job'}
+            {saving ? 'Adding…' : 'Add job'}
           </Button>
         </>
       }
@@ -186,7 +190,7 @@ export function AddJobDialog({
             <Field label="Location" hint='As written, e.g. "Toronto, ON (Hybrid)" or "Remote, Canada".'>
               {(control) => <Input {...control} value={fields.location} onChange={(event) => update('location', event.target.value)} />}
             </Field>
-            <Field label="Posted" hint="From the posting. Leave it empty if it doesn't say; the job waits on hold until you add it.">
+            <Field label="Posted" hint="From the posting. Leave it empty if it doesn't say; the job is queued but on hold until you add it.">
               {(control) => (
                 <Input
                   {...control}
@@ -222,8 +226,11 @@ export function AddJobDialog({
                 </div>
                 <div className="flex justify-between gap-2">
                   <dt className="text-fg-muted">Status if added</dt>
-                  <dd>
+                  <dd className="flex flex-col items-end gap-1 text-right">
                     <QueueStatusBadge status={preview.status} />
+                    {preview.score?.gate.verdict === 'hold' && preview.status === 'queued' ? (
+                      <span className="text-xs text-fg-muted">On hold until it has a valid posted date</span>
+                    ) : null}
                   </dd>
                 </div>
               </dl>

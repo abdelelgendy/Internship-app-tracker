@@ -23,7 +23,8 @@ const bundled: Record<string, string> = Object.fromEntries(
 export const SAMPLE_ANCHOR = '2026-11-03T17:00:00.000Z'
 
 const DAY_MS = 86_400_000
-const MINUTE_MS = 60_000
+// Whole half hours, so a demo interview reads "9:00 PM" on every visit, not 9:15, then 9:17.
+const SHIFT_STEP_MS = 30 * 60_000
 const DATETIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 
@@ -40,9 +41,9 @@ function shiftDates(value: unknown, ms: number, days: number): unknown {
   return value
 }
 
-/** Moves full UTC timestamps by the exact elapsed minutes and dates by the elapsed calendar days. */
+/** Moves full UTC timestamps by the elapsed time in whole half hours, and dates by the elapsed calendar days. */
 export function shiftSampleDates<T>(value: T, now: Date, anchor = new Date(SAMPLE_ANCHOR)): T {
-  const ms = Math.floor((now.getTime() - anchor.getTime()) / MINUTE_MS) * MINUTE_MS
+  const ms = Math.floor((now.getTime() - anchor.getTime()) / SHIFT_STEP_MS) * SHIFT_STEP_MS
   const days = Math.floor(now.getTime() / DAY_MS) - Math.floor(anchor.getTime() / DAY_MS)
   return ms === 0 && days === 0 ? value : (shiftDates(value, ms, days) as T)
 }

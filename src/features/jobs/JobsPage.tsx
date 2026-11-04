@@ -18,9 +18,9 @@ import { QUEUE_STATUS_DISPLAY } from '../../ui/status.ts'
 import { useToast } from '../../ui/toast-context.ts'
 import { AddJobDialog } from './AddJobDialog.tsx'
 import { formatAge, formatAgeShort, plural, sourceLabel, WORKPLACE_LABEL } from './format.ts'
-import { PlusIcon, SortIcon } from './icons.tsx'
+import { PlusIcon, SortIcon } from '../../ui/icons.tsx'
 import { scoreFor, tierLabel } from './jobView.ts'
-import { LoadProblem } from './LoadProblem.tsx'
+import { LoadProblem } from '../../ui/LoadProblem.tsx'
 import { ScoreMark } from './ScoreParts.tsx'
 import { useNow } from './useNow.ts'
 
@@ -334,6 +334,9 @@ export function JobsPage() {
             </>
           ) : null}
         </p>
+        <p>
+          <span className="mark-swipe font-medium">Highlighted</span> scores pass the recency gate: apply now.
+        </p>
         {selectedVisible.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Bulk actions">
             <span className="text-fg">{selectedVisible.length} selected</span>
@@ -375,33 +378,36 @@ export function JobsPage() {
             <caption className="sr-only">Jobs, sorted by {SORT_TEXT[sortKey]}</caption>
             <thead className="border-b border-line text-xs text-fg-muted">
               <tr>
-                <th scope="col" className="w-10 py-2 pr-1 pl-4">
-                  <input
-                    type="checkbox"
-                    aria-label="Select all shown jobs"
-                    checked={selectedVisible.length > 0 && selectedVisible.length === visibleIds.length}
-                    ref={(node) => {
-                      if (node) node.indeterminate = selectedVisible.length > 0 && selectedVisible.length < visibleIds.length
-                    }}
-                    onChange={(event) => setSelected(event.target.checked ? new Set(visibleIds) : new Set())}
-                  />
+                <th scope="col" className="w-10 p-0">
+                  <label className="flex cursor-pointer items-center justify-center py-2.5 pr-1 pl-3">
+                    <input
+                      type="checkbox"
+                      className="size-4"
+                      aria-label="Select all shown jobs"
+                      checked={selectedVisible.length > 0 && selectedVisible.length === visibleIds.length}
+                      ref={(node) => {
+                        if (node) node.indeterminate = selectedVisible.length > 0 && selectedVisible.length < visibleIds.length
+                      }}
+                      onChange={(event) => setSelected(event.target.checked ? new Set(visibleIds) : new Set())}
+                    />
+                  </label>
                 </th>
                 <SortHeader label="Score" sort={ariaSort('score')} onClick={() => toggleSort('score')} className="w-16 text-right" />
                 <SortHeader label="Job" sort={ariaSort('company')} onClick={() => toggleSort('company')} />
-                <th scope="col" className="hidden px-3 py-2 font-medium md:table-cell">
+                <th scope="col" className="hidden px-3 py-2 font-medium xl:table-cell">
                   Status
                 </th>
-                <SortHeader label="Tier" sort={ariaSort('tier')} onClick={() => toggleSort('tier')} className="hidden md:table-cell" />
+                <SortHeader label="Tier" sort={ariaSort('tier')} onClick={() => toggleSort('tier')} className="hidden xl:table-cell" />
                 <SortHeader
                   label="Posted"
                   sort={ariaSort('posted')}
                   onClick={() => toggleSort('posted')}
-                  className="hidden md:table-cell"
+                  className="hidden xl:table-cell"
                 />
-                <th scope="col" className="hidden px-3 py-2 font-medium md:table-cell">
+                <th scope="col" className="hidden px-3 py-2 font-medium xl:table-cell">
                   Source
                 </th>
-                <th scope="col" className="hidden py-2 pr-4 pl-3 font-medium md:table-cell">
+                <th scope="col" className="hidden py-2 pr-4 pl-3 font-medium xl:table-cell">
                   Workplace
                 </th>
               </tr>
@@ -411,25 +417,29 @@ export function JobsPage() {
                 const isSelected = selected.has(job.id)
                 return (
                   <tr key={job.id} className={cx('align-top', isSelected ? 'bg-accent-soft' : 'hover:bg-surface-2/60')}>
-                    <td className="py-3 pr-1 pl-4">
-                      <input
-                        type="checkbox"
-                        aria-label={`Select ${job.company}, ${job.title}`}
-                        checked={isSelected}
-                        onChange={(event) =>
-                          setSelected((current) => {
-                            const next = new Set(current)
-                            if (event.target.checked) next.add(job.id)
-                            else next.delete(job.id)
-                            return next
-                          })
-                        }
-                      />
+                    <td className="p-0">
+                      {/* The label fills the cell, so the hit area is the whole cell, not the 16px box. */}
+                      <label className="flex cursor-pointer justify-center py-3.5 pr-1 pl-3">
+                        <input
+                          type="checkbox"
+                          className="size-4"
+                          aria-label={`Select ${job.company}, ${job.title}`}
+                          checked={isSelected}
+                          onChange={(event) =>
+                            setSelected((current) => {
+                              const next = new Set(current)
+                              if (event.target.checked) next.add(job.id)
+                              else next.delete(job.id)
+                              return next
+                            })
+                          }
+                        />
+                      </label>
                     </td>
                     <td className="px-3 py-3 text-right">
                       <ScoreMark score={score} />
                     </td>
-                    <td className="min-w-48 px-3 py-3">
+                    <td className="px-3 py-3 xl:min-w-48">
                       <Link
                         to={`/jobs/${job.id}`}
                         data-row-link
@@ -438,7 +448,7 @@ export function JobsPage() {
                         {job.title}
                       </Link>
                       <p className="text-[0.8125rem] break-words text-fg-muted">{job.company}</p>
-                      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-muted md:hidden">
+                      <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-fg-muted xl:hidden">
                         <QueueStatusBadge status={job.status} />
                         {application ? <AppStatusBadge status={application.status} /> : null}
                         <span>{score ? tierLabel(score.tier) : 'Unscored'}</span>
@@ -447,20 +457,20 @@ export function JobsPage() {
                         <span>{sourceLabel(job.source)}</span>
                       </p>
                     </td>
-                    <td className="hidden px-3 py-3 md:table-cell">
+                    <td className="hidden px-3 py-3 xl:table-cell">
                       <div className="flex flex-wrap gap-1">
                         <QueueStatusBadge status={job.status} />
                         {application ? <AppStatusBadge status={application.status} /> : null}
                       </div>
                     </td>
-                    <td className="hidden px-3 py-3 whitespace-nowrap text-fg-muted md:table-cell">
+                    <td className="hidden px-3 py-3 whitespace-nowrap text-fg-muted xl:table-cell">
                       {score ? tierLabel(score.tier) : 'Unscored'}
                     </td>
-                    <td className="hidden px-3 py-3 font-mono whitespace-nowrap text-fg-muted tabular-nums md:table-cell">
+                    <td className="hidden px-3 py-3 font-mono whitespace-nowrap text-fg-muted tabular-nums xl:table-cell">
                       {formatAgeShort(job.postedAt, now)}
                     </td>
-                    <td className="hidden px-3 py-3 whitespace-nowrap text-fg-muted md:table-cell">{sourceLabel(job.source)}</td>
-                    <td className="hidden py-3 pr-4 pl-3 whitespace-nowrap text-fg-muted md:table-cell">
+                    <td className="hidden px-3 py-3 whitespace-nowrap text-fg-muted xl:table-cell">{sourceLabel(job.source)}</td>
+                    <td className="hidden py-3 pr-4 pl-3 whitespace-nowrap text-fg-muted xl:table-cell">
                       {WORKPLACE_LABEL[job.workplace]}
                     </td>
                   </tr>
@@ -534,7 +544,7 @@ function JobsSkeleton() {
             <Skeleton className="h-4 w-2/5" />
             <Skeleton className="h-3 w-1/4" />
           </div>
-          <Skeleton className="hidden h-5 w-20 md:block" />
+          <Skeleton className="hidden h-5 w-20 xl:block" />
         </div>
       ))}
     </div>

@@ -1,0 +1,47 @@
+{
+  "apiVersion": "1",
+  "jobs": [
+    {
+      "id": "6a0e4c1e-2b7f-4a39-9d55-3f1c2b8e7a01",
+      "title": "Software Engineer, New Grad",
+      "location": "Canada",
+      "workplaceType": "Remote",
+      "isRemote": true,
+      "isListed": true,
+      "publishedAt": "2026-11-02T21:00:00.000Z",
+      "jobUrl": "https://jobs.ashbyhq.com/harbourlight-sample/6a0e4c1e-2b7f-4a39-9d55-3f1c2b8e7a01",
+      "descriptionPlain": "Harbourlight Health makes appointment booking for physiotherapy clinics. This new grad role works in React, TypeScript and PostgreSQL. We hire anywhere in Canada.",
+      "compensation": { "compensationTierSummary": "CA$70K to CA$85K" }
+    },
+    {
+      "id": "6a0e4c1e-2b7f-4a39-9d55-3f1c2b8e7a02",
+      "title": "Full Stack Developer",
+      "location": "Toronto",
+      "workplaceType": "Hybrid",
+      "isListed": false,
+      "publishedAt": "2026-11-03T12:00:00.000Z",
+      "jobUrl": "https://jobs.ashbyhq.com/harbourlight-sample/6a0e4c1e-2b7f-4a39-9d55-3f1c2b8e7a02",
+      "descriptionPlain": "Not listed yet."
+    },
+    {
+      "id": "6a0e4c1e-2b7f-4a39-9d55-3f1c2b8e7a03",
+      "title": "Junior Software Engineer",
+      "location": "Remote - US",
+      "workplaceType": "Remote",
+      "isListed": true,
+      "publishedAt": "2026-11-03T12:00:00.000Z",
+      "jobUrl": "https://jobs.ashbyhq.com/harbourlight-sample/6a0e4c1e-2b7f-4a39-9d55-3f1c2b8e7a03",
+      "descriptionPlain": "Junior role on the clinic app. React and TypeScript. You must reside in the United States and be authorized to work in the US."
+    },
+    {
+      "id": "6a0e4c1e-2b7f-4a39-9d55-3f1c2b8e7a04",
+      "title": "Junior Developer",
+      "location": "Toronto",
+      "workplaceType": "Hybrid",
+      "isListed": true,
+      "publishedAt": "2026-11-03T13:00:00.000Z",
+      "jobUrl": "https://jobs.ashbyhq.com/harbourlight-sample/6a0e4c1e-2b7f-4a39-9d55-3f1c2b8e7a04",
+      "descriptionPlain": "We are building a talent pipeline for future openings on our web team. React, TypeScript, 0-2 years of experience."
+    }
+  ]
+}

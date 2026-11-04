@@ -62,10 +62,10 @@ describe('Apply kit', { timeout: 15_000 }, () => {
     await user.click(within(answerRow('When can you start?')).getByRole('checkbox', { name: 'Used on this form' }))
     expect(within(answerRow('What are your salary expectations?')).getByRole('checkbox', { name: 'Used on this form' })).toBeChecked()
 
+    const opened = Date.now()
     await user.click(screen.getByRole('button', { name: 'I submitted it' }))
     const dialog = await screen.findByRole('dialog', { name: 'Record it as applied' })
     expect(within(dialog).getByText('3 answers marked as used')).toBeInTheDocument()
-    const before = Date.now()
     await user.click(within(dialog).getByRole('button', { name: 'Record as applied' }))
 
     expect(await screen.findByText('Recorded as applied')).toBeInTheDocument()
@@ -78,9 +78,9 @@ describe('Apply kit', { timeout: 15_000 }, () => {
       'What are your salary expectations?': '$75,000',
       'When can you start?': 'Two weeks after an offer',
     })
-    // The time comes from a minute-precision field, so it is at most a minute before the click.
+    // The time comes from a minute-precision field filled when the dialog opened: that minute, to the second.
     const appliedAt = Date.parse(saved?.appliedAt ?? '')
-    expect(before - appliedAt).toBeLessThan(60_000)
+    expect(appliedAt).toBeGreaterThanOrEqual(Math.floor(opened / 60_000) * 60_000)
     expect(appliedAt).toBeLessThanOrEqual(Date.now())
     expect(saved?.followUp).toEqual({ dueAt: followUpDue({ appliedAt: saved?.appliedAt }) })
     expect(saved?.history.at(-1)).toMatchObject({ status: 'applied', by: 'me' })

@@ -30,9 +30,13 @@ function ageText(hours: number): string {
   return `${Math.floor(hours / 24)} days ago`
 }
 
+/** No posting age passes a score below this, so a missing date can't change the verdict. */
+const LOWEST_PASSING_SCORE = Math.min(...RECENCY_BANDS.map((band) => band.minScore), LOCATION_EXCEPTION.minScore)
+
 /**
  * Decides apply, hold or skip from the score and the posting's age.
  * - Unknown or unreadable dates are a hold: a person opens the posting and adds the date.
+ *   A score below every band's bar is a skip instead, since no date could make it pass.
  * - Ages fall in [0,12), [12,24), [24,48), [48,72) hours.
  * - From 72 hours on, only exception companies pass, up to 168 hours (7 days), at 85 or more.
  */
@@ -43,17 +47,21 @@ export function recencyGate(
   company: string,
   exceptionCompanies: readonly string[] = LOCATION_EXCEPTION_COMPANIES,
 ): ScoreResult['gate'] {
+  const hold = (reason: string): ScoreResult['gate'] =>
+    score < LOWEST_PASSING_SCORE
+      ? { verdict: 'skip', reason: `Score ${score} is below ${LOWEST_PASSING_SCORE}, the lowest any posting age needs, so the date can't change this.` }
+      : { verdict: 'hold', reason }
   if (postedAt === null || postedAt.trim() === '') {
-    return { verdict: 'hold', reason: 'Posting date unknown. Add it from the posting to run the recency check.' }
+    return hold('Posting date unknown. Add it from the posting to run the recency check.')
   }
   const posted = toMillis(postedAt)
   const nowMs = toMillis(now)
   if (posted === null || nowMs === null) {
-    return { verdict: 'hold', reason: `Posting date "${postedAt}" can't be read. Fix it to run the recency check.` }
+    return hold(`Posting date "${postedAt}" can't be read. Fix it to run the recency check.`)
   }
   const rawHours = (nowMs - posted) / HOUR_MS
   if (rawHours < -FUTURE_SKEW_HOURS) {
-    return { verdict: 'hold', reason: 'Posting date is in the future. Check it against the posting.' }
+    return hold('Posting date is in the future. Check it against the posting.')
   }
   const hours = Math.max(0, rawHours)
   const age = `Posted ${ageText(hours)}.`

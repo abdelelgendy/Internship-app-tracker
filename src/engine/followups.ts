@@ -1,4 +1,4 @@
-import { DAY_MS, defaultTimeZone, isWeekend, localDay, localDaysBetween, toIso, toMillis, type Instant } from './dates.ts'
+import { addLocalDays, defaultTimeZone, localDay, localDaysBetween, toIso, toMillis, type Instant } from './dates.ts'
 import type { Application } from './types.ts'
 
 /**
@@ -15,9 +15,7 @@ export const FOLLOW_UP = { firstAfterDays: 7, flagAfterDays: 14, ghostedAfterDay
 export function followUpDue(app: Pick<Application, 'appliedAt'>, timeZone: string = defaultTimeZone()): string | null {
   const applied = toMillis(app.appliedAt)
   if (applied === null) return null
-  let due = applied + FOLLOW_UP.firstAfterDays * DAY_MS
-  while (isWeekend(due, timeZone)) due += DAY_MS
-  return toIso(due)
+  return toIso(addLocalDays(applied, FOLLOW_UP.firstAfterDays, timeZone, { weekdaysOnly: true }))
 }
 
 export type NextActionKind =

@@ -7,7 +7,7 @@ import { Input } from '../../ui/Input.tsx'
 import { Textarea } from '../../ui/Textarea.tsx'
 import { useToast } from '../../ui/toast-context.ts'
 import { copyText } from '../jobs/clipboard.ts'
-import { CopyIcon } from '../jobs/icons.tsx'
+import { CopyIcon } from '../../ui/icons.tsx'
 import { answerSource, initialAnswer, type AnswerState, type QuestionOrigin } from './applyModel.ts'
 
 const GROUPS: { origin: QuestionOrigin[]; title: string }[] = [
@@ -87,7 +87,7 @@ export function AnswersStep({
           <Input
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            placeholder="Paste it here to get a suggested answer"
+            placeholder="Paste a question"
           />
         </label>
         <Button type="submit" disabled={question.trim() === ''}>
@@ -113,21 +113,11 @@ function AnswerItem({
   const { row, value, used, edited } = state
   const human = row.decision.kind === 'human'
   const suggestion = initialAnswer(row.decision)
-  // Chosen from the suggestion, not the value, so the field never swaps while you type.
-  const multiline = suggestion.length > 70
-  const control = {
-    id: `${id}-answer`,
-    value,
-    'aria-describedby': `${id}-source`,
-    placeholder: human ? 'Type the answer you give on the form' : undefined,
-    onChange: (event: { target: { value: string } }) =>
-      onChange(row.question, { value: event.target.value, used: event.target.value.trim() !== '' }),
-  }
 
   return (
     <li className="py-3" data-answer-row={row.question}>
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-        <label htmlFor={control.id} className="min-w-0 flex-1 text-sm font-medium break-words text-fg">
+        <label htmlFor={`${id}-answer`} className="min-w-0 flex-1 text-sm font-medium break-words text-fg">
           {row.question}
         </label>
         {human ? <Badge tone="warn">You answer this</Badge> : null}
@@ -136,7 +126,15 @@ function AnswerItem({
         {human ? row.decision.reason : answerSource(row.decision, profile)}
       </p>
       <div className="mt-2 flex items-start gap-1.5">
-        {multiline ? <Textarea rows={2} {...control} className="min-h-0" /> : <Input {...control} />}
+        {/* Always a textarea that grows with its answer: the answer is what you read and copy, so it must never be cut off. */}
+        <Textarea
+          autoGrow
+          id={`${id}-answer`}
+          aria-describedby={`${id}-source`}
+          value={value}
+          placeholder={human ? 'Your answer' : undefined}
+          onChange={(event) => onChange(row.question, { value: event.target.value, used: event.target.value.trim() !== '' })}
+        />
         <IconButton
           label={`Copy answer to: ${row.question}`}
           icon={<CopyIcon />}
