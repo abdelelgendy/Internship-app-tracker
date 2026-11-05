@@ -229,7 +229,7 @@ export function AddJobDialog({
                   <dd className="flex flex-col items-end gap-1 text-right">
                     <QueueStatusBadge status={preview.status} />
                     {preview.score?.gate.verdict === 'hold' && preview.status === 'queued' ? (
-                      <span className="text-xs text-fg-muted">On hold until it has a valid posted date</span>
+                      <span className="text-xs text-fg-muted">On hold, for the reason above</span>
                     ) : null}
                   </dd>
                 </div>

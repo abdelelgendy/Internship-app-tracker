@@ -36,6 +36,20 @@ describe('Toast', () => {
     expect(region).not.toHaveTextContent('Moved to Applied')
   })
 
+  it('does not double the period when the description already ends a sentence', () => {
+    function Problem() {
+      const toast = useToast()
+      return <Button onClick={() => toast.show({ title: "Can't move to Confirmed", description: 'Submit it first.', tone: 'danger' })}>Try</Button>
+    }
+    render(
+      <ToastProvider>
+        <Problem />
+      </ToastProvider>,
+    )
+    act(() => screen.getByRole('button', { name: 'Try' }).click())
+    expect(document.querySelector('[aria-live="assertive"]')?.textContent).toBe("Can't move to Confirmed. Submit it first.")
+  })
+
   it('runs the action and dismisses the toast', async () => {
     const user = userEvent.setup()
     const onUndo = vi.fn()

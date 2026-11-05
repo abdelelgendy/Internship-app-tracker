@@ -269,6 +269,15 @@ describe('gate and facts', () => {
     expect(result.total).toBeGreaterThan(0)
   })
 
+  it("passes the profile's posting-age limit and the job's verified flag to the gate", () => {
+    const old = new Date(Date.parse(NOW) - 10 * 86_400_000).toISOString()
+    expect(scoreJob(makeJob({ ...IDEAL, postedAt: old }), samProfile(), NOW).gate.verdict).toBe('hold')
+    const strict = samProfile()
+    strict.targeting.maxPostingAgeDays = 7
+    expect(scoreJob(makeJob({ ...IDEAL, postedAt: old }), strict, NOW).gate.verdict).toBe('skip')
+    expect(scoreJob(makeJob({ ...IDEAL, postedAt: old, verified: true }), strict, NOW).gate.verdict).toBe('hold')
+  })
+
   it('uses facts stored on the job over extracted ones', () => {
     const job = makeJob({ title: 'Software Developer', jdText: '3+ years of experience.', facts: { yearsMin: 1, yearsMax: 2 } })
     expect(factsFor(job).yearsMin).toBe(1)

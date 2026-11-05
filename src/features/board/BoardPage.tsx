@@ -374,6 +374,7 @@ function DraggableCard({
             ref={setActivatorNodeRef}
             type="button"
             aria-label={`Move ${cardName(app)}`}
+            data-board-handle={app.id}
             className="-ml-1 flex size-8 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-fg-subtle hover:bg-surface-2 hover:text-fg active:cursor-grabbing"
             {...attributes}
             {...listeners}
@@ -420,6 +421,9 @@ function MoveControl({ app, onMove }: { app: Application; onMove: (app: Applicat
           if (target === '') return
           setTarget('')
           onMove(app, target)
+          // The card re-renders in its new column and this button goes with it, which would drop
+          // focus to the page. Keep it on the card's handle, wherever the card now is.
+          requestAnimationFrame(() => document.querySelector<HTMLElement>(`[data-board-handle="${CSS.escape(app.id)}"]`)?.focus())
         }}
       >
         Move

@@ -19,8 +19,14 @@ const stripes = {
   danger: 'border-l-danger-ink',
 }
 
+/** Ends a phrase with a period unless it already ends a sentence ("submit it.." reads badly). */
+function sentence(text: string): string {
+  const trimmed = text.trim()
+  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`
+}
+
 function announcementFor(options: ToastOptions): string {
-  const text = options.description ? `${options.title}. ${options.description}.` : `${options.title}.`
+  const text = options.description ? `${sentence(options.title)} ${sentence(options.description)}` : sentence(options.title)
   return options.action ? `${text} ${options.action.label} is available: press ${TOAST_SHORTCUT}.` : text
 }
 

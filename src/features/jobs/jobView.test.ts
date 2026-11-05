@@ -22,13 +22,17 @@ describe('scoreFor', () => {
     const profile = samProfile()
     const job = makeJob({ jdText: 'New grads welcome. React and TypeScript.', postedAt: '2026-11-03T12:00:00.000Z' })
     const stored = { ...job, score: scoreJob(job, profile, '2026-11-03T13:00:00.000Z') }
-    expect(scoreFor(stored, profile, '2026-11-08T13:00:00.000Z')?.gate.verdict).toBe('skip')
+    expect(stored.score.gate.verdict).toBe('apply')
+    expect(scoreFor(stored, profile, '2026-11-08T13:00:00.000Z')?.gate.verdict).toBe('hold')
+    expect(scoreFor(stored, profile, '2026-12-08T13:00:00.000Z')?.gate.verdict).toBe('skip')
   })
 
   it('refreshes only the gate when there is no profile, and nothing without a stored score', () => {
     const job = makeJob({ jdText: 'New grads welcome. React and TypeScript.', postedAt: '2026-11-03T12:00:00.000Z' })
     const stored = { ...job, score: scoreJob(job, samProfile(), '2026-11-03T13:00:00.000Z') }
-    expect(scoreFor(stored, null, '2026-11-09T13:00:00.000Z')?.gate.reason).toMatch(/past the 72-hour window/)
+    expect(scoreFor(stored, null, '2026-11-09T13:00:00.000Z')?.gate.reason).toMatch(/confirm the posting is still open/)
+    expect(scoreFor(stored, null, '2026-12-09T13:00:00.000Z')?.gate.reason).toMatch(/past your 30-day limit/)
+    expect(scoreFor({ ...stored, verified: true }, null, '2026-12-09T13:00:00.000Z')?.gate.verdict).toBe('hold')
     expect(scoreFor(job, null, NOW)).toBeNull()
   })
 })

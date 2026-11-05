@@ -32,10 +32,10 @@
         "gates"
       ],
       "prompt": "Explain the recency gate. Why does a posting with a high score still get held?",
-      "answer": "Fresh postings get the most replies, so the bar to apply rises with age:\n\n| Age | Minimum score |\n| --- | --- |\n| under 12 hours | 65 |\n| 12 to 24 hours | 70 |\n| 24 to 48 hours | 75 |\n| 48 to 72 hours | 85 |\n\nPast 72 hours a posting needs an exception, and past 7 days it is skipped. A posting with **no known date** is held rather than guessed, because a wrong date is worse than no date.",
+      "answer": "Fresh postings get the most replies, so the bar to apply rises with age:\n\n| Age | Minimum score |\n| --- | --- |\n| under 12 hours | 65 |\n| 12 to 24 hours | 70 |\n| 24 to 48 hours | 75 |\n| 48 to 72 hours | 85 |\n\nA score below a band's bar is held, not skipped: only its age keeps it back. From 72 hours to 30 days every posting is held, with a reminder to check it is still open, because new-grad postings often stay open for weeks. Past 30 days it is skipped, unless a person checked it is still open; age alone never skips a checked posting. The 30-day limit is a profile setting. A score below 65 is skipped at any age, and a posting with **no known date** is held rather than guessed, because a wrong date is worse than no date.",
       "keyPoints": [
         "Thresholds rise with age: 65, 70, 75, 85",
-        "Over 7 days is skipped",
+        "From 72 hours to 30 days it is held; past 30 days skipped unless checked",
         "Unknown age is held, not guessed",
         "Holding is reversible; a person can still apply"
       ],

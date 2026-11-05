@@ -18,7 +18,7 @@ export function scoreFor(job: Job, profile: Profile | null, now: Instant): Score
   if (!job.score) return null
   // Without a profile only the gate can be refreshed; a disqualified score stays as stored.
   if (job.score.tier === null) return job.score
-  return { ...job.score, gate: recencyGate(job.score.total, job.postedAt, now, job.company) }
+  return { ...job.score, gate: recencyGate(job.score.total, job.postedAt, now, job.company, { verified: job.verified }) }
 }
 
 export interface Duplicate {

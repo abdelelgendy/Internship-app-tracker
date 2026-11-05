@@ -109,6 +109,8 @@ describe('Board moves', { timeout: 15_000 }, () => {
       const saved = (await source.repo.listApplications()).find((app) => app.id === 'sample-app-09')
       expect(saved?.status).toBe('withdrawn')
     })
+    // The Move button leaves with the card; focus stays on the card in its new column.
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Move Glacier Byte, Junior Developer, Client Projects' })).toHaveFocus())
   })
 
   it('has no Move to menu on a final status', async () => {

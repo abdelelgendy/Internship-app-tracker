@@ -145,6 +145,6 @@ Run them with `npm test`, plus `npm run lint` and `npm run typecheck`.
 ## Known limits
 
 - The dev server and the scripts serialize writes to a data file with a shared `<file>.lock`, and a stale write is refused, not merged: if a script changes a row while a page has it open, the page's next save of that row fails, the page reloads, and the person makes the change again. A crashed process can leave a lock behind; it is removed after 15 seconds.
-- The recency gate follows job-hunter's rules: a posting older than 72 hours is skipped unless it is at one of a few named companies. New-grad postings often stay open for weeks, so a gentler default (hold up to about 30 days) is planned.
+- The recency gate is gentler than job-hunter's. job-hunter skipped every posting older than 72 hours; new-grad postings often stay open for weeks, so Shortlist keeps the 72-hour bars only for "apply now", holds older postings up to 30 days with a reminder to check they are still open, and skips them after that unless a person marked them as checked. The limit is `targeting.maxPostingAgeDays` in the profile.
 - The daily application target uses the default of 10 per weekday; there is no setting for it yet.
 - The scanner's board parsers are tested against saved responses; a live run is the first check against each board's current API.

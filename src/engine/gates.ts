@@ -4,8 +4,9 @@ import { normalizeCompany } from './normalize.ts'
 import type { Job, JobFacts, QueueStatus, ScoreResult } from './types.ts'
 
 /**
- * The recency gate: a fresh posting needs a lower score than an old one, because early
- * applicants get read. Thresholds are the restored April 28 values (decision table 1.10, #1-3).
+ * The recency gate. Postings are ranked by freshness, and a fresh posting needs a lower score
+ * to apply to right away, because early applicants get read. These bars are the restored
+ * April 28 values (decision table 1.10, #1-3) and only decide "apply now" in the first 72 hours.
  */
 export const RECENCY_BANDS = [
   { underHours: 12, minScore: 65, label: 'under 12 hours' },
@@ -21,6 +22,13 @@ export const LOCATION_EXCEPTION_COMPANIES = [
   'Shopify', 'Vercel', 'Supabase', 'Linear', 'Notion', 'Figma',
 ] as const
 
+/**
+ * Past this age an unchecked posting is skipped. job-hunter skipped everything after 72 hours,
+ * which is too strict for a search a person drives: new-grad postings stay open for weeks.
+ * The profile can set its own limit (targeting.maxPostingAgeDays).
+ */
+export const DEFAULT_MAX_POSTING_AGE_DAYS = 30
+
 // A posting dated slightly ahead of our clock is clock skew; more than this is bad data.
 const FUTURE_SKEW_HOURS = 1
 
@@ -30,59 +38,82 @@ function ageText(hours: number): string {
   return `${Math.floor(hours / 24)} days ago`
 }
 
-/** No posting age passes a score below this, so a missing date can't change the verdict. */
+/** No posting age passes a score below this, so neither a date nor a check can change the verdict. */
 const LOWEST_PASSING_SCORE = Math.min(...RECENCY_BANDS.map((band) => band.minScore), LOCATION_EXCEPTION.minScore)
+
+/** The posting-age limit in days: the profile's, when it is a positive number, else the default. */
+export function maxPostingAgeDays(value: number | undefined): number {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : DEFAULT_MAX_POSTING_AGE_DAYS
+}
+
+export interface GateOptions {
+  /** A person confirmed the posting is open (Job.verified). Age alone then never skips it. */
+  verified?: boolean
+  /** Skip unchecked postings older than this many days. Defaults to 30. */
+  maxAgeDays?: number
+  exceptionCompanies?: readonly string[]
+}
 
 /**
  * Decides apply, hold or skip from the score and the posting's age.
+ * - A score below 65 is a skip at any age: no posting age passes it.
  * - Unknown or unreadable dates are a hold: a person opens the posting and adds the date.
- *   A score below every band's bar is a skip instead, since no date could make it pass.
- * - Ages fall in [0,12), [12,24), [24,48), [48,72) hours.
- * - From 72 hours on, only exception companies pass, up to 168 hours (7 days), at 85 or more.
+ * - Under 72 hours, in bands [0,12), [12,24), [24,48), [48,72): a score at the band's bar is
+ *   "apply"; below it the job is held, not skipped, since only its age keeps it back.
+ * - From 72 hours to the age limit (30 days by default) it is a hold: confirm the posting is
+ *   still open. Exception companies still pass up to 168 hours (7 days) at 85 or more.
+ * - Past the limit it is a skip, unless it is verified: age alone never skips a checked posting.
  */
 export function recencyGate(
   score: number,
   postedAt: string | null,
   now: Instant,
   company: string,
-  exceptionCompanies: readonly string[] = LOCATION_EXCEPTION_COMPANIES,
+  options: GateOptions = {},
 ): ScoreResult['gate'] {
-  const hold = (reason: string): ScoreResult['gate'] =>
-    score < LOWEST_PASSING_SCORE
-      ? { verdict: 'skip', reason: `Score ${score} is below ${LOWEST_PASSING_SCORE}, the lowest any posting age needs, so the date can't change this.` }
-      : { verdict: 'hold', reason }
+  const { verified = false, exceptionCompanies = LOCATION_EXCEPTION_COMPANIES } = options
+  const limitDays = maxPostingAgeDays(options.maxAgeDays)
+  if (score < LOWEST_PASSING_SCORE) {
+    return { verdict: 'skip', reason: `Score ${score} is below ${LOWEST_PASSING_SCORE}, the lowest any posting age needs, so the date can't change this.` }
+  }
   if (postedAt === null || postedAt.trim() === '') {
-    return hold('Posting date unknown. Add it from the posting to run the recency check.')
+    return { verdict: 'hold', reason: 'Posting date unknown. Add it from the posting to run the recency check.' }
   }
   const posted = toMillis(postedAt)
   const nowMs = toMillis(now)
   if (posted === null || nowMs === null) {
-    return hold(`Posting date "${postedAt}" can't be read. Fix it to run the recency check.`)
+    return { verdict: 'hold', reason: `Posting date "${postedAt}" can't be read. Fix it to run the recency check.` }
   }
   const rawHours = (nowMs - posted) / HOUR_MS
   if (rawHours < -FUTURE_SKEW_HOURS) {
-    return hold('Posting date is in the future. Check it against the posting.')
+    return { verdict: 'hold', reason: 'Posting date is in the future. Check it against the posting.' }
   }
   const hours = Math.max(0, rawHours)
   const age = `Posted ${ageText(hours)}.`
+  const limit = `${limitDays}-day limit`
+
+  if (hours > limitDays * 24) {
+    return verified
+      ? { verdict: 'hold', reason: `${age} That is past your ${limit}, but you checked it is open. Confirm it again before you apply.` }
+      : { verdict: 'skip', reason: `${age} That is past your ${limit}.` }
+  }
 
   const band = RECENCY_BANDS.find((entry) => hours < entry.underHours)
   if (band) {
     return score >= band.minScore
       ? { verdict: 'apply', reason: `${age} Score ${score} meets the ${band.minScore} needed at ${band.label}.` }
-      : { verdict: 'skip', reason: `${age} Score ${score} is below the ${band.minScore} needed at ${band.label}.` }
+      : { verdict: 'hold', reason: `${age} Score ${score} is below the ${band.minScore} needed to apply right away at ${band.label}. Worth a look if your queue is short.` }
   }
 
   const key = normalizeCompany(company)
   const isException = exceptionCompanies.some((name) => normalizeCompany(name) === key)
-  if (!isException) return { verdict: 'skip', reason: `${age} That is past the 72-hour window.` }
-  if (hours > LOCATION_EXCEPTION.maxAgeHours) {
-    return { verdict: 'skip', reason: `${age} That is past the 7-day window, even for ${company}.` }
+  if (isException && hours <= LOCATION_EXCEPTION.maxAgeHours && score >= LOCATION_EXCEPTION.minScore) {
+    return {
+      verdict: 'apply',
+      reason: `${age} ${company} is on the exception list, open for 7 days at ${LOCATION_EXCEPTION.minScore}. Score ${score} meets it.`,
+    }
   }
-  const rule = `${company} is on the exception list, open for 7 days at ${LOCATION_EXCEPTION.minScore}.`
-  return score >= LOCATION_EXCEPTION.minScore
-    ? { verdict: 'apply', reason: `${age} ${rule} Score ${score} meets it.` }
-    : { verdict: 'skip', reason: `${age} ${rule} Score ${score} is below it.` }
+  return { verdict: 'hold', reason: `${age} Older than 72 hours, so confirm the posting is still open before you apply.` }
 }
 
 /** Tier 1 is entry level, tier 2 asks for a little experience or does not say, tier 3 is a stretch. */
@@ -123,7 +154,7 @@ export function dailyCapFor(
 
 /**
  * The queue status a scored job should get. `skipped_age` means it failed the recency and score
- * gate, which includes a fresh posting whose score is too low for its age band.
+ * gate: a score below every bar, or an unchecked posting past the age limit.
  */
 export function queueStatusFor(result: ScoreResult, signals: { duplicate?: boolean; ghost?: string | null } = {}): QueueStatus {
   if (signals.duplicate) return 'skipped_duplicate'

@@ -131,6 +131,7 @@ export interface Profile {
   targeting: {
     titles: string[]; avoidTitles: string[]; locations: string[]; maxYears: number;
     dealbreakers: string[]; preferredKeywords: string[]; industriesPrefer?: string[]; industriesAvoid?: string[]
+    maxPostingAgeDays?: number // unchecked postings older than this are skipped; default 30
   }
   answers: { id: string; question: string; patterns: string[]; answer: string; needsHuman?: boolean; note?: string }[]
   coverLetter: { signature: string; maxWords: number; voiceNotes: string[]; bannedPhrases: string[] }

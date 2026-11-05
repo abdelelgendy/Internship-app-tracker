@@ -255,6 +255,6 @@ export function scoreJob(job: Job, profile: Profile, now: Instant): ScoreResult 
   const gate =
     band.stretch && total < STRETCH_MIN_SCORE
       ? { verdict: 'skip' as const, reason: `${band.summary} is a stretch and needs ${STRETCH_MIN_SCORE} or more; this scores ${total}.` }
-      : recencyGate(total, job.postedAt, now, job.company)
+      : recencyGate(total, job.postedAt, now, job.company, { verified: job.verified, maxAgeDays: profile.targeting.maxPostingAgeDays })
   return { total, parts, tier: band.tier, disqualifiers, gate, rubricVersion: RUBRIC_VERSION }
 }

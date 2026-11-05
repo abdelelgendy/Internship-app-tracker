@@ -201,6 +201,7 @@
       "Remote"
     ],
     "maxYears": 3,
+    "maxPostingAgeDays": 30,
     "dealbreakers": [
       "5+ years",
       "7+ years",

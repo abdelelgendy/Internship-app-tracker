@@ -22,11 +22,11 @@
     "id": "exercise-recency-gate",
     "title": "Table-driven recency gate",
     "goal": "Writing a small pure function with boundary tests.",
-    "spec": "Write `recencyGate(ageHours, score)` returning `apply`, `hold` or `skip` using the table in the \"How Shortlist works\" deck. Unknown age is `hold`. Then write a table-driven test that checks every boundary: 11.9, 12, 23.9, 24, 47.9, 48, 71.9, 72 and 168 hours.",
+    "spec": "Write `recencyGate(ageHours, score)` returning `apply`, `hold` or `skip` using the table in the \"How Shortlist works\" deck. Unknown age is `hold`; from 72 hours to 30 days it is `hold`; past 30 days it is `skip`. Then write a table-driven test that checks every boundary: 11.9, 12, 23.9, 24, 47.9, 48, 71.9, 72, 720 and 720.1 hours.",
     "acceptance": [
       "Every boundary has a test",
       "Unknown age returns hold",
-      "Over 168 hours returns skip",
+      "Over 720 hours (30 days) returns skip",
       "No test depends on the current time"
     ],
     "timeboxMinutes": 40

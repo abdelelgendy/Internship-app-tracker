@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useData, useRepo, useRepoData } from '@/data/data-context.ts'
 import type { Profile } from '@/engine/types.ts'
+import { maxPostingAgeDays } from '@/engine/gates.ts'
 import { Button } from '@/ui/Button.tsx'
 import { Card } from '@/ui/Card.tsx'
 import { EmptyState } from '@/ui/EmptyState.tsx'
@@ -189,6 +190,8 @@ function Basics({ profile }: { profile: Profile }) {
     ['Open to', openTo.join(', ') || 'Not set'],
     ['Work authorization', CANADA_STATUS[profile.authorization.canada]],
     ['Targets', `${profile.targeting.titles.length} titles, up to ${profile.targeting.maxYears} years of experience`],
+    // targeting.maxPostingAgeDays in profile.json; the gate falls back to 30 days.
+    ['Posting age limit', `Skip unchecked postings older than ${maxPostingAgeDays(profile.targeting.maxPostingAgeDays)} days`],
   ]
   return (
     <Card className="px-4 py-3">
